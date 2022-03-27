@@ -17,7 +17,7 @@ class HEFT(AlgoBase):
         entry_task = next(
             (task for task in tasks if len(task.in_edges) == 0), None)
         if entry_task is None:
-            raise ValueError
+            raise ValueError('No entry or exit node')
 
         self.calculate_rank(entry_task)
         sorted_tasks = sorted(tasks, key=cmp_to_key(task_compare))

@@ -15,7 +15,7 @@ class AlgoBase:
 
     def schedule(self, tasks: list[Node], input: int, output: int) -> tuple[list[list[Node]], int]:
         pass
-
+    
     def plot(self, schedules: list[list[Node]], makespan, filename='heft'):
         fig, ax = plt.subplots()
         per_height = 20

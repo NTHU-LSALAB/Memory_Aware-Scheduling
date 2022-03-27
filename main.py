@@ -1,13 +1,12 @@
 import sys
 sys.path.insert(0, 'src')
 
-from platforms.memory import Memory
 from graph.dag import DAG
 
-dag = DAG('HEFT')
-dag.read_input('examples/sample.2.in')
-schedule, makespan = dag.schedule()
-print(makespan)
+# dag = DAG()
+# dag.read_input('examples/sample.2.in')
+# schedule, makespan = dag.schedule('heft')
+# print(makespan)
 # print('''HEFT SCHEDULE
 # ---------------------------
 # Proc	Task	AST	AFT
@@ -21,10 +20,21 @@ print(makespan)
 # END
 # ---------------------------''')
 
-dag = DAG('HEFT_delay')
-dag.read_input('examples/sample.2.in')
-dag.algo.set_memory(Memory(100))
-schedule, makespan = dag.schedule()
+dag = DAG()
+dag.read_input('examples/sample.3.in')
+schedule, makespan = dag.schedule('heft')
+print(makespan)
+try:
+    schedule, makespan = dag.schedule('heft_delay', 110)
+    print(makespan)
+except Exception as e:
+    print(e)
+    pass
+# try:
+schedule, makespan = dag.schedule('heft_bf', 110)
+# except Exception as e:
+    # print(e)
+    # pass
 print(makespan)
 # print('''HEFT_delay SCHEDULE
 # ---------------------------
@@ -38,11 +48,11 @@ print(makespan)
 # ---------------------------
 # END
 # ---------------------------''')
-dag = DAG('heft_bf')
-dag.read_input('examples/sample.2.in')
-dag.algo.set_memory(Memory(110))
-schedule, makespan = dag.schedule()
-print(makespan)
+# dag = DAG()
+# dag.read_input('examples/sample.3.in')
+# dag.algo.set_memory(Memory(90))
+# schedule, makespan = dag.schedule('heft_bf')
+# print(makespan)
 # print('''BF SCHEDULE
 # ---------------------------
 # Proc	Task	AST	AFT

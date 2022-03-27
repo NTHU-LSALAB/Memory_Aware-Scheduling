@@ -21,11 +21,13 @@ class HEFTDelay(AlgoBase):
             (task for task in tasks if len(task.out_edges) == 0), None)
 
         if entry_task is None or exit_task is None:
-            raise ValueError
+            raise ValueError('No entry or exit node')
 
         self.calculate_rank(entry_task)
         sorted_tasks = sorted(tasks, key=cmp_to_key(task_compare))
-        schedule: list[list[Node]] = [[] for _ in range(len(entry_task.cost_table))]
+        print(list(map(lambda task: task.id, sorted_tasks)))
+        schedule: list[list[Node]] = [[]
+                                      for _ in range(len(entry_task.cost_table))]
 
         for task in sorted_tasks:
             min_eft_procId = np.argmin(task.cost_table)
@@ -37,7 +39,7 @@ class HEFTDelay(AlgoBase):
             for pid, cost in enumerate(task.cost_table):
                 proc_est = schedule[pid][-1].aft if len(
                     schedule[pid]) > 0 else est
-                
+
                 # check if current task and its parents are on the same processor
                 for in_edge in task.in_edges:
                     if in_edge.source.procId-1 != pid:
@@ -48,7 +50,7 @@ class HEFTDelay(AlgoBase):
                     selected_ast = proc_est
                     min_eft = eft
                     min_eft_procId = pid
-            
+
             # allocate input tensor
             if task is entry_task:
                 self.memory.first_fit(input, [selected_ast, min_eft])
@@ -56,8 +58,13 @@ class HEFTDelay(AlgoBase):
             if task is exit_task:
                 self.memory.first_fit(output, [selected_ast, min_eft], task)
             else:
+                # allocate internal buffer
+                # print(task.buffer_size)
+                self.memory.first_fit(
+                    task.buffer_size, [selected_ast, min_eft], task)
+                # allocate task's output tensor
                 self.memory.first_fit(task.out_edges[0].size, [
-                                   selected_ast, Memory.DEADLINE], task)
+                    selected_ast, Memory.DEADLINE], task, final=False)
             # free input tensors
             if task is not entry_task:
                 # check if inputs can be free
@@ -74,7 +81,7 @@ class HEFTDelay(AlgoBase):
                     if last_use:
                         until = max(until, min_eft)
                         self.memory.free_tensor(in_edge.source, until)
-            
+
             # append task to schedule
             task.procId = min_eft_procId + 1
             task.ast = selected_ast
