@@ -1,8 +1,8 @@
 import json
 from algorithms.algo_base import AlgoBase
 from algorithms.heft_lookup import HEFTLookup
-from graph.edge import Edge
-from graph.node import Node
+from platforms.dep import Dep
+from platforms.task import Task
 from algorithms.heft import HEFT
 from algorithms.heft_delay import HEFTDelay
 from algorithms.heft_bf import HEFTBrutoForce
@@ -22,22 +22,22 @@ class DAG:
             }[algo.lower()]
         return algo
 
-    def read_input(self, filepath: str, memory=True):
-        self.tasks: list[Node] = []
+    def read_input(self, filepath: str):
+        self.tasks: list[Task] = []
         with open(filepath, 'r') as f:
             json_file = json.load(f)
             self.input = json_file["input"]
             for json_node in json_file["nodes"]:
-                node = Node(json_node["id"], json_node["costs"], json_node["output"], 10)
+                node = Task(json_node["id"], json_node["costs"], json_node["output"], 10)
                 self.tasks.append(node)
             for json_edge in json_file["edges"]:
                 source = self.tasks[json_edge["from"] - 1]
                 target = self.tasks[json_edge["to"] - 1]
-                new_edge = Edge(source, target, source.output)
+                new_edge = Dep(source, target, source.output)
                 source.out_edges.append(new_edge)
                 target.in_edges.append(new_edge)
 
-    def schedule(self, algo, memory=None) -> tuple[list[list[Node]], int]:
+    def schedule(self, algo, memory=None) -> tuple[list[list[Task]], int]:
         algo = self.get_algo(algo)
         if memory:
             algo.memory = Memory(memory)

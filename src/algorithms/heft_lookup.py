@@ -1,18 +1,18 @@
 from sys import maxsize
 from algorithms.algo_base import AlgoBase
-from graph.node import Node
 from functools import cmp_to_key
 import numpy as np
 from platforms.memory import Memory
+from platforms.task import Task
 
 
-def task_compare(task1: Node, task2: Node):
+def task_compare(task1: Task, task2: Task):
     return task2.rank - task1.rank
 
 
 class HEFTLookup(AlgoBase):
 
-    def schedule(self, tasks: list[Node], input) -> tuple[list[list[Node]], int]:
+    def schedule(self, tasks: list[Task], input) -> tuple[list[list[Task]], int]:
         print('lookup version')
         self.input = input
         self.reserved_list = []
@@ -27,7 +27,7 @@ class HEFTLookup(AlgoBase):
 
         self.calculate_rank(self.entry_task)
         sorted_tasks = sorted(tasks, key=cmp_to_key(task_compare))
-        self.schedule: list[list[Node]] = [[]
+        self.schedule: list[list[Task]] = [[]
                                            for _ in range(len(self.entry_task.cost_table))]
         sorted_tasks = sorted_tasks
         # for rollback
@@ -42,7 +42,7 @@ class HEFTLookup(AlgoBase):
         self.plot(self.schedule, self.makespan, 'heft-lookup')
         return self.schedule, self.makespan
 
-    def reserve(self, task: Node, depth=1, root=True):
+    def reserve(self, task: Task, depth=1, root=True):
         if depth == -1:
             return True
 
@@ -62,7 +62,7 @@ class HEFTLookup(AlgoBase):
 
         return can_reserve
 
-    def allocate_memory(self, task: Node, check=False):
+    def allocate_memory(self, task: Task):
         if task in self.reserved_list:
             return True
         print('allocate', task.id)
@@ -135,7 +135,8 @@ class HEFTLookup(AlgoBase):
                             break
                         until = max(until, out_edge.target.aft)
                     if last_use:
-                        until = max(until, latest_start + (min_eft - selected_ast))
+                        until = max(until, latest_start +
+                                    (min_eft - selected_ast))
                         # print(until)
                         print(task.id, 'free', in_edge.source.id, until)
                         self.memory.free_tensor(in_edge.source, until)
@@ -171,13 +172,13 @@ class HEFTLookup(AlgoBase):
                 if t.id == task.id and t.round == task.round:
                     proc_schedule.remove(t)
 
-    def allocate_dependencies(self, task: Node):
+    def allocate_dependencies(self, task: Task):
         checked = True
         for edge in task.in_edges:
             checked = checked and self.allocate_dependencies(edge.source)
         return checked and self.allocate_memory(task)
 
-    def calculate_rank(self, task: Node):
+    def calculate_rank(self, task: Task):
         if task.rank:
             return task.rank
         max = 0
@@ -188,7 +189,7 @@ class HEFTLookup(AlgoBase):
         task.rank = task.cost_avg + max
         return task.rank
 
-    def print_rank(self, entry_task: Node):
+    def print_rank(self, entry_task: Task):
         print('''UPPER RANKS
 ---------------------------
 Task    Rank

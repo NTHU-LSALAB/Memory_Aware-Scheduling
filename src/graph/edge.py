@@ -5,11 +5,9 @@ if TYPE_CHECKING:
 
 
 class Edge:
-    def __init__(self, source: 'Node', target: 'Node', size: int, weight: int = 0):
+    def __init__(self, source: 'Node', target: 'Node'):
         self.source = source
         self.target = target
-        self.size = size
-        self.weight = weight
 
     def __repr__(self):
-        return f'{self.source} -> {self.target}: {self.weight}'
+        return f'{self.source} -> {self.target}'
