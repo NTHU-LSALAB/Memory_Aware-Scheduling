@@ -29,11 +29,12 @@ class HEFTLookup(AlgoBase):
         sorted_tasks = sorted(tasks, key=cmp_to_key(task_compare))
         self.schedule: list[list[Node]] = [[]
                                            for _ in range(len(self.entry_task.cost_table))]
-        sorted_tasks = sorted_tasks
+        sorted_tasks = sorted_tasks[:4]
         # for rollback
         self.round = 1
         for task in sorted_tasks:
-            print('===================Task', task.id, 'start===================')
+            print('===================Task', task.id,
+                  'start===================')
             self.reserve(task)
             self.round = self.round + 1
 
@@ -55,6 +56,7 @@ class HEFTLookup(AlgoBase):
             can_reserve = can_reserve and self.reserve(
                 edge.target, depth-1, root=False)
 
+        # print(task.id, can_reserve)
         if not can_reserve and root:
             self.rollback(task)
 
@@ -64,11 +66,13 @@ class HEFTLookup(AlgoBase):
         if task in self.reserved_list:
             return True
         print('allocate', task.id)
+        task.round = self.round
         min_eft_procId = np.argmin(task.cost_table)
         min_eft = task.cost_table[min_eft_procId] if task is self.entry_task else maxsize
         # calculate start time
+        # print(list(map(lambda edge: edge.source.aft, task.in_edges)))
         selected_ast = est = 0 if task is self.entry_task else max(
-            [edge.source.aft for edge in task.in_edges])
+            [edge.source.aft if edge.source.aft else 0 for edge in task.in_edges])
         # choose a processor
         for pid, cost in enumerate(task.cost_table):
             proc_est = self.schedule[pid][-1].aft if len(
@@ -85,79 +89,91 @@ class HEFTLookup(AlgoBase):
                 min_eft = eft
                 min_eft_procId = pid
         checked = True
+        latest_start = -1
         if task is self.entry_task:
-            checked = checked and self.memory.first_fit(
+            ok, slot = self.memory.first_fit(
                 self.input, [selected_ast, min_eft], task)
+            if slot:
+                latest_start = max(latest_start, slot.interval[0])
+            checked = checked and ok
 
         # allocate output tensor
         if task is self.exit_task:
-            checked = checked and self.memory.first_fit(
+            ok, slot = self.memory.first_fit(
                 task.output, [selected_ast, min_eft], task)
+            if slot:
+                latest_start = max(latest_start, slot.interval[0])
+            checked = checked and ok
         else:
             # allocate task's output tensor
-            checked = checked and self.memory.first_fit(task.out_edges[0].size, [
+            ok, slot = self.memory.first_fit(task.out_edges[0].size, [
                 selected_ast, Memory.DEADLINE], task, final=False)
+            if slot:
+                latest_start = max(latest_start, slot.interval[0])
+            checked = checked and ok
 
         # allocate internal buffer
-        checked = checked and self.memory.first_fit(
+        ok, slot = self.memory.first_fit(
             task.buffer_size, [selected_ast, min_eft], task, check=check)
+        if slot:
+            latest_start = max(latest_start, slot.interval[0])
+        checked = checked and ok
 
-        # free input tensors
-        if task is not self.entry_task:
-            # check if inputs can be free
-            for in_edge in task.in_edges:
-                last_use = True
-                until = -1
-                for out_edge in in_edge.source.out_edges:
-                    if out_edge.target is task:
-                        continue
-                    if out_edge.target.procId is None:  # not allocate yet
-                        last_use = False
-                        break
-                    until = max(until, out_edge.target.aft)
-                if last_use:
-                    until = max(until, min_eft)
-                    self.memory.free_tensor(in_edge.source, until)
-
-        task.procId = min_eft_procId + 1
-        task.ast = selected_ast
-        task.aft = min_eft
-        task.round = self.round
-        self.schedule[min_eft_procId].append(task)
-        # update makespan
-        if task.aft > self.makespan:
-            self.makespan = task.aft
-
+        # print('checked', checked)
         if checked:
-            task.round = self.round
+            # free input tensors
+            if task is not self.entry_task:
+                # check if inputs can be free
+                for in_edge in task.in_edges:
+                    last_use = True
+                    until = -1
+                    for out_edge in in_edge.source.out_edges:
+                        if out_edge.target is task:
+                            continue
+                        if out_edge.target.procId is None:  # not allocate yet
+                            last_use = False
+                            break
+                        until = max(until, out_edge.target.aft)
+                    if last_use:
+                        until = max(until, min_eft)
+                        # print(until)
+                        self.memory.free_tensor(in_edge.source, until)
             self.reserved_list.append(task)
+            task.procId = min_eft_procId + 1
+            task.ast = selected_ast
+            task.aft = min_eft
+            # task.ast = latest_start
+            # task.aft = latest_start + (min_eft - selected_ast)
+            task.round = self.round
+            self.schedule[min_eft_procId].append(task)
+            # update makespan
+            if task.aft > self.makespan:
+                self.makespan = task.aft
         return checked
 
-    def rollback(self, task, depth = 1):
+    def rollback(self, task, depth=1):
         if depth == -1:
             return True
 
         print('rollback', task.id)
-        
+
         # rollback for children
         for edge in task.out_edges:
             self.rollback(edge.target, depth-1)
-        
+
         if task in self.reserved_list and task.round == self.round:
             self.reserved_list.remove(task)
         self.memory.rollback(task.id, self.round)
         for proc_schedule in self.schedule:
             for t in proc_schedule:
-                if t.id == task.id:
-                    print(t.id, t.round, task.round)
-                    if t.round == task.round:
-                        proc_schedule.remove(t)
+                if t.id == task.id and t.round == task.round:
+                    proc_schedule.remove(t)
 
     def allocate_dependencies(self, task: Node):
         checked = True
         for edge in task.in_edges:
             checked = checked and self.allocate_dependencies(edge.source)
-        return checked & (self.allocate_memory(task, check=True) or task in self.reserved_list)
+        return checked and self.allocate_memory(task)
 
     def calculate_rank(self, task: Node):
         if task.rank:

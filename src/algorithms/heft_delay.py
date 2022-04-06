@@ -25,7 +25,6 @@ class HEFTDelay(AlgoBase):
 
         self.calculate_rank(entry_task)
         sorted_tasks = sorted(tasks, key=cmp_to_key(task_compare))
-        print(list(map(lambda task: task.id, sorted_tasks)))
         schedule: list[list[Node]] = [[]
                                       for _ in range(len(entry_task.cost_table))]
 
@@ -53,18 +52,26 @@ class HEFTDelay(AlgoBase):
 
             # allocate input tensor
             if task is entry_task:
-                self.memory.first_fit(input, [selected_ast, min_eft])
+                ok, _ = self.memory.first_fit(input, [selected_ast, min_eft], task)
+                if not ok:
+                    raise ValueError('Fail to allocate memory')
             # allocate output tensor
-            # if task is exit_task:
-            #     self.memory.first_fit(output, [selected_ast, min_eft], task)
+            if task is exit_task:
+                ok, _ = self.memory.first_fit(task.output, [selected_ast, min_eft], task)
+                if not ok:
+                    raise ValueError('Fail to allocate memory')
             else:
                 # allocate internal buffer
                 # print(task.buffer_size)
-                self.memory.first_fit(
+                ok, _ = self.memory.first_fit(
                     task.buffer_size, [selected_ast, min_eft], task)
+                if not ok:
+                    raise ValueError('Fail to allocate memory')
                 # allocate task's output tensor
-                self.memory.first_fit(task.out_edges[0].size, [
+                ok, _ = self.memory.first_fit(task.out_edges[0].size, [
                     selected_ast, Memory.DEADLINE], task, final=False)
+                if not ok:
+                    raise ValueError('Fail to allocate memory')
             # free input tensors
             if task is not entry_task:
                 # check if inputs can be free
