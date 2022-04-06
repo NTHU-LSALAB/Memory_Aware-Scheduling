@@ -6,7 +6,7 @@ if TYPE_CHECKING:
 
 
 class Node:
-    def __init__(self, id: int, cost_table: list[int], buffer_size: int = 0):
+    def __init__(self, id: int, cost_table: list[int], output: int, buffer_size: int = 0):
         self.id = id
         self.buffer_size = buffer_size
         self.in_edges: list['Edge'] = []
@@ -18,6 +18,8 @@ class Node:
         self.ast: int = None
         self.aft: int = None
         self.procId: int = None
+        self.output = output
+        self.round = -1
 
     def __repr__(self):
         return str({

@@ -12,7 +12,7 @@ def task_compare(task1: Node, task2: Node):
 
 class HEFTDelay(AlgoBase):
 
-    def schedule(self, tasks: list[Node], input, output) -> tuple[list[list[Node]], int]:
+    def schedule(self, tasks: list[Node], input) -> tuple[list[list[Node]], int]:
         print('delay version')
         makespan = 0
         entry_task = next(
@@ -55,8 +55,8 @@ class HEFTDelay(AlgoBase):
             if task is entry_task:
                 self.memory.first_fit(input, [selected_ast, min_eft])
             # allocate output tensor
-            if task is exit_task:
-                self.memory.first_fit(output, [selected_ast, min_eft], task)
+            # if task is exit_task:
+            #     self.memory.first_fit(output, [selected_ast, min_eft], task)
             else:
                 # allocate internal buffer
                 # print(task.buffer_size)

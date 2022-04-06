@@ -13,7 +13,7 @@ class AlgoBase:
     def set_memory(self, memory: Memory) -> None:
         self.memory = memory
 
-    def schedule(self, tasks: list[Node], input: int, output: int) -> tuple[list[list[Node]], int]:
+    def schedule(self, tasks: list[Node], input: int) -> tuple[list[list[Node]], int]:
         pass
     
     def plot(self, schedules: list[list[Node]], makespan, filename='heft'):

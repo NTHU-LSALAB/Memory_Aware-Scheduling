@@ -9,39 +9,54 @@ from graph.node import Node
 
 
 class Memory:
-    DEADLINE = 200
+    DEADLINE = 80
 
     def __init__(self, size=100):
         self.slots = []
         self.size = size
 
-    def first_fit(self, size, interval, task: Node = None, final=True):
+    def first_fit(self, size, interval, task, final=True, check=False):
         if size == 0:
-            return None
+            return True
         overlap_slots = list(filter(
             lambda slot: slot.interval[0] < interval[1] and slot.interval[1] > interval[0], self.slots))
         if not overlap_slots:
-            return self.allocate((0, size), interval, task, final)
+            self.allocate((0, size), interval, task, final)
+            return True
         prev_addr = 0
         for slot in overlap_slots:
             if (slot.addr[0] - prev_addr) >= size:
-                return self.allocate([prev_addr, prev_addr+size], interval, task, final)
-            prev_addr = slot.addr[1]
+                print(slot.task.id, [prev_addr, prev_addr+size])
+                self.allocate([prev_addr, prev_addr+size],
+                              interval, task, final)
+                return True
+            prev_addr = max(slot.addr[1], prev_addr)
         if (self.size - prev_addr) >= size:
-            return self.allocate([prev_addr, prev_addr+size], interval, task, final)
+            self.allocate([prev_addr, prev_addr+size], interval, task, final)
+            return True
         # delay
         delay_to = min([slot.interval[1] for slot in overlap_slots])
         if delay_to == self.DEADLINE:
-            self.plot(filename='unfit')
-            raise ValueError('Cannot fit the memory constraint')
+            if check:
+                return False
+            return None
+            # self.plot(filename='unfit')
+            # raise ValueError('Cannot fit the memory constraint')
         interval = [delay_to, delay_to + (interval[1] - interval[0])]
         return self.first_fit(size, interval, task, final)
 
+    def rollback(self, tid, round):
+        print(tid, round)
+        self.slots = list(filter(lambda slot: slot.task.id !=
+                          tid or slot.task.round != round, self.slots))
+
     def free_tensor(self, task, until):
-        target_slot = next(
-            slot for slot in self.slots if slot.task is task and slot.final is False)
-        target_slot.interval[1] = until
-        target_slot.final = True
+        print('free', task.id)
+        target_slots = list(filter(lambda slot: slot.task is task and slot.final is False, self.slots))
+        if target_slots:
+            target_slot = target_slots[0]
+            target_slot.interval[1] = until
+            target_slot.final = True
 
     def allocate(self, address, interval, task, final=True):
         # insert slot
@@ -79,7 +94,7 @@ class Memory:
 
 
 class Slot:
-    def __init__(self, address, interval, task=None, final=True):
+    def __init__(self, address, interval, task, final=True):
         self.addr = address
         self.interval = interval
         self.task = task
@@ -103,5 +118,5 @@ class Slot:
 
     def __repr__(self):
         id = self.task.id if self.task else 'IO'
-        return f'\n(id: {id}, is_buffer: {self.is_buffer})'
-        # return f'(id: {id}, start: {self.addr[0]}, end: {self.addr[1]}, is_buffer: {self.is_buffer})'
+        return f'\n(id: {id}, final: {self.final})'
+        # return f'\n(id: {id}, start: {self.addr[0]}, end: {self.addr[1]})'

@@ -1,4 +1,6 @@
+import json
 from algorithms.algo_base import AlgoBase
+from algorithms.heft_lookup import HEFTLookup
 from graph.edge import Edge
 from graph.node import Node
 from algorithms.heft import HEFT
@@ -15,35 +17,32 @@ class DAG:
             algo: AlgoBase = {
                 'heft': HEFT(),
                 'heft_delay': HEFTDelay(),
-                'heft_bf': HEFTBrutoForce()
+                'heft_bf': HEFTBrutoForce(),
+                'heft_lookup': HEFTLookup()
             }[algo.lower()]
         return algo
 
     def read_input(self, filepath: str, memory=True):
-        self.tasks = []
+        self.tasks: list[Node] = []
         with open(filepath, 'r') as f:
-            [task_num] = map(int, next(f).split())
-            self.input, self.output = map(int, next(f).split())
-            self.tasks = []
-            for tid in range(task_num):
-                cost_table = [int(x) for x in next(f).split()]
-                self.tasks.append(Node(tid+1, cost_table, 10))
-            for sid in range(task_num-1):
-                line = next(f).split()
-                size = int(line[0])
-                targets = list(map(int, line[1:]))
-                for target in targets:
-                    new_edge = Edge(self.tasks[sid],
-                                    self.tasks[target-1], size)
-                    self.tasks[sid].out_edges.append(new_edge)
-                    self.tasks[target-1].in_edges.append(new_edge)
+            json_file = json.load(f)
+            self.input = json_file["input"]
+            for json_node in json_file["nodes"]:
+                node = Node(json_node["id"], json_node["costs"], json_node["output"], 10)
+                self.tasks.append(node)
+            for json_edge in json_file["edges"]:
+                source = self.tasks[json_edge["from"] - 1]
+                target = self.tasks[json_edge["to"] - 1]
+                new_edge = Edge(source, target, source.output)
+                source.out_edges.append(new_edge)
+                target.in_edges.append(new_edge)
 
-    def schedule(self, algo, memory = None) -> tuple[list[list[Node]], int]:
+    def schedule(self, algo, memory=None) -> tuple[list[list[Node]], int]:
         algo = self.get_algo(algo)
         if memory:
             algo.memory = Memory(memory)
         tasks = copy.deepcopy(self.tasks)
-        return algo.schedule(tasks, input=self.input, output=self.output)
+        return algo.schedule(tasks, input=self.input)
 
     def __repr__(self):
         string = '''DAG
