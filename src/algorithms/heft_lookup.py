@@ -30,47 +30,50 @@ class HEFTLookup(AlgoBase):
         self.schedule: list[list[Task]] = [[]
                                            for _ in range(len(self.entry_task.cost_table))]
         sorted_tasks = sorted_tasks
+
         # for rollback
-        self.round = 1
         for task in sorted_tasks:
-            print('===================Task', task.id,
-                  'start===================')
-            self.reserve(task)
-            self.round = self.round + 1
+            print('========================')
+            print('Reserve', task.id)
+            print('========================')
+            self.round_list = []
+            success = self.reserve(task)
+            print('success:', success)
+            if not success:
+                self.rollback(task)
+            print('Reserved_list:', list(
+                map(lambda task: task.id, self.reserved_list)))
 
         self.memory.plot(self.makespan, filename='mem-heft-lookup')
         self.plot(self.schedule, self.makespan, 'heft-lookup')
         return self.schedule, self.makespan
 
-    def reserve(self, task: Task, depth=1, root=True):
+    def reserve(self, task: Task, depth=1):
+        return self.__reserve_re(task, depth)
+
+    def __reserve_re(self, task: Task, depth):
         if depth == -1:
             return True
 
-        print('reserve ', task.id)
-        can_reserve = True
-
-        can_reserve = can_reserve and self.allocate_dependencies(task)
+        if task not in self.round_list:
+            self.round_list.append(task)
+        can_reserve = self.allocate_dependencies(task)
 
         # reserve for children
         for edge in task.out_edges:
-            can_reserve = can_reserve and self.reserve(
-                edge.target, depth-1, root=False)
-
-        # print(task.id, can_reserve)
-        if not can_reserve and root:
-            self.rollback(task)
+            can_reserve = can_reserve and self.__reserve_re(
+                edge.target, depth-1)
 
         return can_reserve
 
     def allocate_memory(self, task: Task):
+        # already allocated
         if task in self.reserved_list:
             return True
-        print('allocate', task.id)
-        task.round = self.round
+        print('Allocate', task.id)
         min_eft_procId = np.argmin(task.cost_table)
         min_eft = task.cost_table[min_eft_procId] if task is self.entry_task else maxsize
         # calculate start time
-        # print(list(map(lambda edge: edge.source.aft, task.in_edges)))
         selected_ast = est = 0 if task is self.entry_task else max(
             [edge.source.aft if edge.source.aft else 0 for edge in task.in_edges])
         # choose a processor
@@ -88,8 +91,9 @@ class HEFTLookup(AlgoBase):
                 selected_ast = proc_est
                 min_eft = eft
                 min_eft_procId = pid
+        # Check memory
         checked = True
-        latest_start = -1
+        latest_start = selected_ast
         if task is self.entry_task:
             ok, slot = self.memory.first_fit(
                 self.input, [selected_ast, min_eft], task)
@@ -114,12 +118,11 @@ class HEFTLookup(AlgoBase):
 
         # allocate internal buffer
         ok, slot = self.memory.first_fit(
-            task.buffer_size, [selected_ast, min_eft], task, est=latest_start)
+            task.buffer_size, [latest_start, latest_start + min_eft - selected_ast], task, est=latest_start)
         if slot:
             latest_start = max(latest_start, slot.interval[0])
         checked = checked and ok
 
-        # print('checked', checked)
         if checked:
             # free input tensors
             if task is not self.entry_task:
@@ -137,16 +140,11 @@ class HEFTLookup(AlgoBase):
                     if last_use:
                         until = max(until, latest_start +
                                     (min_eft - selected_ast))
-                        # print(until)
-                        print(task.id, 'free', in_edge.source.id, until)
                         self.memory.free_tensor(in_edge.source, until)
             self.reserved_list.append(task)
             task.procId = min_eft_procId + 1
-            # task.ast = selected_ast
-            # task.aft = min_eft
             task.ast = latest_start
             task.aft = latest_start + (min_eft - selected_ast)
-            task.round = self.round
             self.schedule[min_eft_procId].append(task)
             # update makespan
             if task.aft > self.makespan:
@@ -157,22 +155,28 @@ class HEFTLookup(AlgoBase):
         if depth == -1:
             return True
 
-        print('rollback', task.id)
+        print('Rollback:', list(map(lambda task: task.id, self.round_list)))
+        for task in self.round_list:
+            task.rollback()
+            if task in self.reserved_list:
+                self.reserved_list.remove(task)
+            self.memory.rollback(task.id)
+            for proc_schedule in self.schedule:
+                for t in proc_schedule:
+                    if t.id == task.id:
+                        proc_schedule.remove(t)
 
-        task.rollback()
-        # rollback for children
-        for edge in task.out_edges:
-            self.rollback(edge.target, depth-1)
-
-        if task in self.reserved_list and task.round == self.round:
-            self.reserved_list.remove(task)
-        self.memory.rollback(task.id, self.round)
-        for proc_schedule in self.schedule:
-            for t in proc_schedule:
-                if t.id == task.id and t.round == task.round:
-                    proc_schedule.remove(t)
+        # if task in self.reserved_list and task.round == self.round:
+        #     self.reserved_list.remove(task)
+        # self.memory.rollback(task.id, self.round)
+        # for proc_schedule in self.schedule:
+        #     for t in proc_schedule:
+        #         if t.id == task.id and t.round == task.round:
+        #             proc_schedule.remove(t)
 
     def allocate_dependencies(self, task: Task):
+        if task not in self.round_list:
+            self.round_list.append(task)
         checked = True
         for edge in task.in_edges:
             checked = checked and self.allocate_dependencies(edge.source)

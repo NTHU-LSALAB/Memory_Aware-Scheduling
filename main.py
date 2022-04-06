@@ -1,7 +1,9 @@
+
 import sys
 sys.path.insert(0, 'src')
 
 from graph.dag import DAG
+
 
 def print_schedule(schedule, makespan, version=''):
     print(f'''HEFT {version} SCHEDULE
@@ -17,7 +19,8 @@ Makespan = {makespan}
 END
 ---------------------------''')
 
-memory_size = 100
+
+memory_size = 90
 
 dag = DAG()
 dag.read_input('examples/sample.3.json')

@@ -24,7 +24,7 @@ class Memory:
             lambda slot: slot.interval[0] < interval[1] and slot.interval[1] > interval[0], self.slots))
         if not overlap_slots:
             return True, self.allocate((0, size), interval, task, final)
-        
+
         # if task.id == 5:
         #     print(interval, overlap_slots)
         prev_addr = 0
@@ -43,10 +43,9 @@ class Memory:
         return self.first_fit(size, interval, task, final)
         # return False, None
 
-    def rollback(self, tid, round):
-        # print(tid, self.slots, round)
+    def rollback(self, tid: int):
         self.slots = list(filter(lambda slot: slot.task.id !=
-                          tid or slot.task.round != round, self.slots))
+                          tid, self.slots))
 
     def free_tensor(self, task, until):
         target_slots = list(
