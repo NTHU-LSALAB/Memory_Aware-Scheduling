@@ -20,6 +20,11 @@ class Node:
         self.procId: int = None
         self.output = output
         self.round = -1
+    
+    def rollback(self):
+        self.ast = None
+        self.aft = None
+        self.procId = None
 
     def __repr__(self):
         return str({

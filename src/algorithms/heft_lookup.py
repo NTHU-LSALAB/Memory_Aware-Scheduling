@@ -29,7 +29,7 @@ class HEFTLookup(AlgoBase):
         sorted_tasks = sorted(tasks, key=cmp_to_key(task_compare))
         self.schedule: list[list[Node]] = [[]
                                            for _ in range(len(self.entry_task.cost_table))]
-        sorted_tasks = sorted_tasks[:4]
+        sorted_tasks = sorted_tasks
         # for rollback
         self.round = 1
         for task in sorted_tasks:
@@ -114,7 +114,7 @@ class HEFTLookup(AlgoBase):
 
         # allocate internal buffer
         ok, slot = self.memory.first_fit(
-            task.buffer_size, [selected_ast, min_eft], task, check=check)
+            task.buffer_size, [selected_ast, min_eft], task, est=latest_start)
         if slot:
             latest_start = max(latest_start, slot.interval[0])
         checked = checked and ok
@@ -135,15 +135,16 @@ class HEFTLookup(AlgoBase):
                             break
                         until = max(until, out_edge.target.aft)
                     if last_use:
-                        until = max(until, min_eft)
+                        until = max(until, latest_start + (min_eft - selected_ast))
                         # print(until)
+                        print(task.id, 'free', in_edge.source.id, until)
                         self.memory.free_tensor(in_edge.source, until)
             self.reserved_list.append(task)
             task.procId = min_eft_procId + 1
-            task.ast = selected_ast
-            task.aft = min_eft
-            # task.ast = latest_start
-            # task.aft = latest_start + (min_eft - selected_ast)
+            # task.ast = selected_ast
+            # task.aft = min_eft
+            task.ast = latest_start
+            task.aft = latest_start + (min_eft - selected_ast)
             task.round = self.round
             self.schedule[min_eft_procId].append(task)
             # update makespan
@@ -157,6 +158,7 @@ class HEFTLookup(AlgoBase):
 
         print('rollback', task.id)
 
+        task.rollback()
         # rollback for children
         for edge in task.out_edges:
             self.rollback(edge.target, depth-1)

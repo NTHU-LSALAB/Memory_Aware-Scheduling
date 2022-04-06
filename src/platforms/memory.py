@@ -15,22 +15,27 @@ class Memory:
         self.slots = []
         self.size = size
 
-    def first_fit(self, size, interval, task, final=True, check=False):
+    def first_fit(self, size, interval, task, final=True, est=0):
         if size == 0:
             return True, None
+        est = max(est, interval[0])
+        interval = [est, est + interval[1] - interval[0]]
         overlap_slots = list(filter(
             lambda slot: slot.interval[0] < interval[1] and slot.interval[1] > interval[0], self.slots))
         if not overlap_slots:
             return True, self.allocate((0, size), interval, task, final)
+        
+        # if task.id == 5:
+        #     print(interval, overlap_slots)
         prev_addr = 0
         for slot in overlap_slots:
             if (slot.addr[0] - prev_addr) >= size:
                 return True, self.allocate([prev_addr, prev_addr+size],
-                              interval, task, final)
+                                           interval, task, final)
             prev_addr = max(slot.addr[1], prev_addr)
         if (self.size - prev_addr) >= size:
             return True, self.allocate([prev_addr, prev_addr+size], interval, task, final)
-        # # delay
+        # delay
         delay_to = min([slot.interval[1] for slot in overlap_slots])
         if delay_to == self.DEADLINE:
             return False, None
@@ -44,12 +49,13 @@ class Memory:
                           tid or slot.task.round != round, self.slots))
 
     def free_tensor(self, task, until):
-        target_slots = list(filter(lambda slot: slot.task is task and slot.final is False, self.slots))
+        target_slots = list(
+            filter(lambda slot: slot.task is task and slot.final is False, self.slots))
         if target_slots:
             target_slot = target_slots[0]
             target_slot.interval[1] = until
             target_slot.final = True
-    
+
     def free_buffer(self, task):
         print(task.id)
 
@@ -70,7 +76,7 @@ class Memory:
                              slot.size, alpha=1, color=color)
             fig.gca().add_patch(rect)
             rx, ry = rect.get_xy()
-            cx = rx+3
+            cx = rx+4
             cy = ry + rect.get_height()/2.0
 
             # print(slot.task.id sif slot.task else 'I', slot.pos, slot.length, slot.size)
@@ -113,5 +119,6 @@ class Slot:
 
     def __repr__(self):
         id = self.task.id if self.task else 'IO'
-        return f'\n(id: {id}, final: {self.final}, round: {self.task.round})'
+        # return f'\n(id: {id}, final: {self.final}, round: {self.task.round})'
         # return f'\n(id: {id}, start: {self.addr[0]}, end: {self.addr[1]})'
+        return f'\n(id: {id}, start: {self.interval[0]}, end: {self.interval[1]})'

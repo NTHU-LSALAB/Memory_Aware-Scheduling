@@ -17,7 +17,7 @@ Makespan = {makespan}
 END
 ---------------------------''')
 
-memory_size = 110
+memory_size = 100
 
 dag = DAG()
 dag.read_input('examples/sample.3.json')
