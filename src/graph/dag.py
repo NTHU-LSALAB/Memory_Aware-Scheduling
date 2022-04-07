@@ -1,3 +1,4 @@
+from functools import cmp_to_key
 import json
 from algorithms.algo_base import AlgoBase
 from algorithms.heft_lookup import HEFTLookup
@@ -5,7 +6,6 @@ from platforms.dep import Dep
 from platforms.task import Task
 from algorithms.heft import HEFT
 from algorithms.heft_delay import HEFTDelay
-from algorithms.heft_bf import HEFTBrutoForce
 from platforms.memory import Memory
 import copy
 
@@ -17,7 +17,6 @@ class DAG:
             algo: AlgoBase = {
                 'heft': HEFT(),
                 'heft_delay': HEFTDelay(),
-                'heft_bf': HEFTBrutoForce(),
                 'heft_lookup': HEFTLookup()
             }[algo.lower()]
         return algo
@@ -28,11 +27,15 @@ class DAG:
             json_file = json.load(f)
             self.input = json_file["input"]
             for json_node in json_file["nodes"]:
-                node = Task(json_node["id"], json_node["costs"], json_node["output"], 10)
+                node = Task(
+                    json_node["id"], json_node["costs"], json_node["output"], json_node.get("buffer", 10))
                 self.tasks.append(node)
+            def task_compare(task1: Task, task2: Task):
+                return task1.id - task2.id
+            self.tasks = sorted(self.tasks, key=cmp_to_key(task_compare))
             for json_edge in json_file["edges"]:
-                source = self.tasks[json_edge["from"] - 1]
-                target = self.tasks[json_edge["to"] - 1]
+                source = self.tasks[json_edge["source"] - 1]
+                target = self.tasks[json_edge["target"] - 1]
                 new_edge = Dep(source, target, source.output)
                 source.out_edges.append(new_edge)
                 target.in_edges.append(new_edge)
@@ -50,5 +53,5 @@ class DAG:
 '''
         for task in self.tasks:
             for edge in task.out_edges:
-                string += f'{edge.source.id}---{edge.weight}--->{edge.target.id}\n'
+                string += f'{edge.source.id:>2} ---> {edge.target.id}\n'
         return string

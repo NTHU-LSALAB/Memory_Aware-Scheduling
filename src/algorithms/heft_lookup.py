@@ -6,10 +6,6 @@ from platforms.memory import Memory
 from platforms.task import Task
 
 
-def task_compare(task1: Task, task2: Task):
-    return task2.rank - task1.rank
-
-
 class HEFTLookup(AlgoBase):
 
     def schedule(self, tasks: list[Task], input) -> tuple[list[list[Task]], int]:
@@ -26,6 +22,9 @@ class HEFTLookup(AlgoBase):
             raise ValueError('No entry or exit node')
 
         self.calculate_rank(self.entry_task)
+
+        def task_compare(task1: Task, task2: Task):
+            return task2.rank - task1.rank
         sorted_tasks = sorted(tasks, key=cmp_to_key(task_compare))
         self.schedule: list[list[Task]] = [[]
                                            for _ in range(len(self.entry_task.cost_table))]
@@ -55,8 +54,6 @@ class HEFTLookup(AlgoBase):
         if depth == -1:
             return True
 
-        if task not in self.rollback_list:
-            self.rollback_list.append(task)
         can_reserve = self.allocate_dependencies(task)
 
         # reserve for children
@@ -70,6 +67,8 @@ class HEFTLookup(AlgoBase):
         # already allocated
         if task in self.reserved_list:
             return True
+        if task not in self.rollback_list:
+            self.rollback_list.append(task)
         print('Allocate', task.id)
         min_eft_procId = np.argmin(task.cost_table)
         min_eft = task.cost_table[min_eft_procId] if task is self.entry_task else maxsize
@@ -167,8 +166,6 @@ class HEFTLookup(AlgoBase):
                         proc_schedule.remove(t)
 
     def allocate_dependencies(self, task: Task):
-        if task not in self.rollback_list:
-            self.rollback_list.append(task)
         checked = True
         for edge in task.in_edges:
             checked = checked and self.allocate_dependencies(edge.source)

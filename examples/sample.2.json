@@ -85,60 +85,60 @@
     ],
     "edges": [
         {
-            "from": 1,
-            "to": 2
+            "source": 1,
+            "target": 2
         },
         {
-            "from": 1,
-            "to": 3
+            "source": 1,
+            "target": 3
         },
         {
-            "from": 1,
-            "to": 4
+            "source": 1,
+            "target": 4
         },
         {
-            "from": 1,
-            "to": 5
+            "source": 1,
+            "target": 5
         },
         {
-            "from": 2,
-            "to": 6
+            "source": 2,
+            "target": 6
         },
         {
-            "from": 2,
-            "to": 7
+            "source": 2,
+            "target": 7
         },
         {
-            "from": 3,
-            "to": 6
+            "source": 3,
+            "target": 6
         },
         {
-            "from": 3,
-            "to": 8
+            "source": 3,
+            "target": 8
         },
         {
-            "from": 4,
-            "to": 6
+            "source": 4,
+            "target": 6
         },
         {
-            "from": 5,
-            "to": 7
+            "source": 5,
+            "target": 7
         },
         {
-            "from": 5,
-            "to": 8
+            "source": 5,
+            "target": 8
         },
         {
-            "from": 6,
-            "to": 9
+            "source": 6,
+            "target": 9
         },
         {
-            "from": 7,
-            "to": 9
+            "source": 7,
+            "target": 9
         },
         {
-            "from": 8,
-            "to": 9
+            "source": 8,
+            "target": 9
         }
     ]
 }

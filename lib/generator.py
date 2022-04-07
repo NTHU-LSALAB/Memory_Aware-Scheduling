@@ -1,22 +1,24 @@
+import json
+from os import listdir
+from os.path import isfile, join
 import random
 import math
 import argparse
 import numpy as np
-from numpy.random.mtrand import sample
-from matplotlib import patches, pyplot as plt
+from matplotlib import pyplot as plt
 import networkx as nx
 from networkx.readwrite import json_graph
-from scipy import sparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--mode', default='default',
                     type=str)  # parameters setting
 parser.add_argument('--n', default=10, type=int)  # number of DAG  nodes
 # max out_degree of one node
-parser.add_argument('--max_out', default=2, type=float)
+parser.add_argument('--max_out', default=4, type=float)
 parser.add_argument('--alpha', default=1, type=float)  # shape
 parser.add_argument('--beta', default=1.0, type=float)  # regularity
-parser.add_argument('--out', default='examples/sample.test.json')
+parser.add_argument('--out')
+parser.add_argument('--processor', default=3)
 args = parser.parse_args()
 
 set_dag_size = [20, 30, 40, 50, 60, 70, 80, 90]  # random number of DAG  nodes
@@ -103,126 +105,88 @@ def DAGs_generate(mode='default', n=10, max_out=2, alpha=1, beta=1.0):
         pred += len(dag_list_update[i])
 
     ######################################create start node and exit node################################
-    for node, id in enumerate(into_degree):  # 给所有没有入边的节点添加入口节点作父亲
+    for node, id in enumerate(into_degree):
         if id == 0:
             edges.append(('Start', node+1))
             into_degree[node] += 1
 
-    for node, od in enumerate(out_degree):  # 给所有没有出边的节点添加出口节点作儿子
+    for node, od in enumerate(out_degree):
         if od == 0:
             edges.append((node+1, 'Exit'))
             out_degree[node] += 1
 
-    #############################################plot###################################################
-    return edges, into_degree, out_degree, position
+    return edges, position
 
 
-def plot_DAG(edges, postion):
+def plot_DAG(edges, postion, filename):
     g1 = nx.DiGraph()
     g1.add_edges_from(edges)
     nx.draw_networkx(g1, arrows=True, pos=postion)
-    plt.savefig("DAG.png", format="PNG")
+    plt.savefig('out/dag/'+filename, format="PNG")
     return plt.clf
 
 
-def save_JSON(edges):
+def build_graph(edges):
     g1 = nx.DiGraph()
     g1.add_edges_from(edges)
-    with open('examples/'+args.out, 'w') as f:
-        f.write(json_graph.jit_data(g1))
+    return json_graph.node_link_data(g1)
 
 
-def search_for_successors(node, edges):
-    '''
-    寻找后续节点
-    :param node: 需要查找的节点id
-    :param edges: DAG边信息(注意最好传列表的值（edges[:]）进去而不是传列表的地址（edges）!!!)
-    :return: node的后续节点id列表
-    '''
-    map = {}
-    if node == 'Exit':
-        return print("error, 'Exit' node do not have successors!")
-    for i in range(len(edges)):
-        if edges[i][0] in map.keys():
-            map[edges[i][0]].append(edges[i][1])
-        else:
-            map[edges[i][0]] = [edges[i][1]]
-    pred = map[node]
-    return pred
+def random_cpu(t):
+    if random.random() < args.prob:
+        return random.sample(range(1, 3 * t), 1)[0]
+    else:
+        return random.sample(range(5 * t, 10 * t), 1)[0]
 
 
-def search_for_all_successors(node, edges):
-    save = node
-    node = [node]
-    for ele in node:
-        succ = search_for_successors(ele, edges)
-        if(len(succ) == 1 and succ[0] == 'Exit'):
-            break
-        for item in succ:
-            if item in node:
-                continue
-            else:
-                node.append(item)
-    node.remove(save)
-    return node
-
-
-def search_for_predecessor(node, edges):
-    '''
-    寻找前继节点
-    :param node: 需要查找的节点id
-    :param edges: DAG边信息
-    :return: node的前继节点id列表
-    '''
-    map = {}
-    if node == 'Start':
-        return print("error, 'Start' node do not have predecessor!")
-    for i in range(len(edges)):
-        if edges[i][1] in map.keys():
-            map[edges[i][1]].append(edges[i][0])
-        else:
-            map[edges[i][1]] = [edges[i][0]]
-    succ = map[node]
-    return succ
-# for my graduation project
+def random_mem(r, is_buffer=False):
+    if is_buffer:
+        return round(random.uniform(0.03 * r, 0.1 * r))
+    else:
+        return round(random.uniform(0.05 * r, 0.5 * r))
 
 
 def workflows_generator(mode='default', n=10, max_out=2, alpha=1, beta=1.0, t_unit=10, resource_unit=100):
-    '''
-    随机生成一个DAG任务并随机分配它的持续时间和（CPU，Memory）的需求
-    :param mode: DAG按默认参数生成
-    :param n: DAG中任务数
-    :para max_out: DAG节点最大子节点数
-    :return: edges      DAG边信息
-             duration   DAG节点持续时间
-             demand     DAG节点资源需求数量
-             position   作图中的位置
-    '''
     t = t_unit  # s   time unit
     r = resource_unit  # resource unit
-    edges, in_degree, out_degree, position = DAGs_generate(
+    edges, pos = DAGs_generate(
         mode, n, max_out, alpha, beta)
-    save_JSON(edges)
-    duration = []
-    demand = []
-    # 初始化持续时间
-    for i in range(len(in_degree)):
-        if random.random() < args.prob:
-            # duration.append(random.uniform(t,3*t))
-            duration.append(random.sample(range(0, 3 * t), 1)[0])
+
+    new_filename = args.out
+    if not new_filename:
+        onlyfiles = [f for f in listdir(
+            'examples') if isfile(join('examples', f))]
+        latest = int(
+            max(list(map(lambda file: file.split('.')[1], onlyfiles))))
+        new_filename = f'sample.{latest+1}'
+
+    plot_DAG(edges, pos, new_filename+'.png')
+    dag = build_graph(edges)
+
+    def transform(obj, key):
+        if obj[key] == 'Start':
+            obj[key] = 1
+        elif obj[key] == 'Exit':
+            obj[key] = len(dag['nodes'])
         else:
-            # duration.append(random.uniform(5*t,10*t))
-            duration.append(random.sample(range(5 * t, 10 * t), 1)[0])
-    # 初始化资源需求
-    for i in range(len(in_degree)):
-        if random.random() < 0.5:
-            demand.append((random.uniform(0.25 * r, 0.5 * r),
-                          random.uniform(0.05 * r, 0.01 * r)))
-        else:
-            demand.append((random.uniform(0.05 * r, 0.01 * r),
-                          random.uniform(0.25 * r, 0.5 * r)))
+            obj[key] = obj[key] + 1
 
-    return edges, duration, demand, position
+    for node in dag['nodes']:
+        transform(node, 'id')
+        node['costs'] = [random_cpu(t) for _ in range(args.processor)]
+        node['output'] = random_mem(r)
+        node['buffer'] = random_mem(r, True)
+
+    for link in dag['links']:
+        transform(link, 'source')
+        transform(link, 'target')
+
+    dag['input'] = random_mem(r)
+    dag['edges'] = dag['links']
+    del dag['links']
+    with open('examples/'+new_filename+'.json', 'w') as f:
+        json.dump(dag, f, indent=4)
 
 
-workflows_generator()
+if __name__ == '__main__':
+    workflows_generator()

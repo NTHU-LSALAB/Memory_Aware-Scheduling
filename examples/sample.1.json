@@ -94,64 +94,64 @@
     ],
     "edges": [
         {
-            "from": 1,
-            "to": 2
+            "source": 1,
+            "target": 2
         },
         {
-            "from": 1,
-            "to": 3
+            "source": 1,
+            "target": 3
         },
         {
-            "from": 1,
-            "to": 4
+            "source": 1,
+            "target": 4
         },
         {
-            "from": 1,
-            "to": 5
+            "source": 1,
+            "target": 5
         },
         {
-            "from": 1,
-            "to": 6
+            "source": 1,
+            "target": 6
         },
         {
-            "from": 2,
-            "to": 8
+            "source": 2,
+            "target": 8
         },
         {
-            "from": 2,
-            "to": 9
+            "source": 2,
+            "target": 9
         },
         {
-            "from": 3,
-            "to": 7
+            "source": 3,
+            "target": 7
         },
         {
-            "from": 4,
-            "to": 8
+            "source": 4,
+            "target": 8
         },
         {
-            "from": 4,
-            "to": 9
+            "source": 4,
+            "target": 9
         },
         {
-            "from": 5,
-            "to": 9
+            "source": 5,
+            "target": 9
         },
         {
-            "from": 6,
-            "to": 8
+            "source": 6,
+            "target": 8
         },
         {
-            "from": 7,
-            "to": 10
+            "source": 7,
+            "target": 10
         },
         {
-            "from": 8,
-            "to": 10
+            "source": 8,
+            "target": 10
         },
         {
-            "from": 9,
-            "to": 10
+            "source": 9,
+            "target": 10
         }
     ]
 }

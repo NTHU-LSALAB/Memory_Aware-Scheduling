@@ -1,3 +1,10 @@
 .vscode
 
-src/**/__pycache__
+**/__pycache__
+
+examples/*
+!examples/simple.1.json
+!examples/simple.2.json
+!examples/simple.3.json
+
+out/**/*.png

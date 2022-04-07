@@ -50,28 +50,36 @@ class HEFTDelay(AlgoBase):
                     min_eft = eft
                     min_eft_procId = pid
 
+            latest_start = selected_ast
             # allocate input tensor
             if task is entry_task:
-                ok, _ = self.memory.first_fit(input, [selected_ast, min_eft], task)
+                ok, slot = self.memory.first_fit(input, [selected_ast, min_eft], task)
                 if not ok:
                     raise ValueError('Fail to allocate memory')
+                if slot:
+                    latest_start = max(latest_start, slot.interval[0])
             # allocate output tensor
             if task is exit_task:
-                ok, _ = self.memory.first_fit(task.output, [selected_ast, min_eft], task)
+                ok, slot = self.memory.first_fit(task.output, [selected_ast, min_eft], task)
                 if not ok:
                     raise ValueError('Fail to allocate memory')
+                if slot:
+                    latest_start = max(latest_start, slot.interval[0])
             else:
-                # allocate internal buffer
-                # print(task.buffer_size)
-                ok, _ = self.memory.first_fit(
-                    task.buffer_size, [selected_ast, min_eft], task)
-                if not ok:
-                    raise ValueError('Fail to allocate memory')
                 # allocate task's output tensor
-                ok, _ = self.memory.first_fit(task.out_edges[0].size, [
+                ok, slot = self.memory.first_fit(task.out_edges[0].size, [
                     selected_ast, Memory.DEADLINE], task, final=False)
                 if not ok:
                     raise ValueError('Fail to allocate memory')
+                if slot:
+                    latest_start = max(latest_start, slot.interval[0])
+            # allocate internal buffer
+            ok, slot = self.memory.first_fit(
+                task.buffer_size, [latest_start, latest_start + min_eft - selected_ast], task)
+            if not ok:
+                raise ValueError('Fail to allocate memory')
+            if slot:
+                latest_start = max(latest_start, slot.interval[0])
             # free input tensors
             if task is not entry_task:
                 # check if inputs can be free
@@ -86,19 +94,20 @@ class HEFTDelay(AlgoBase):
                             break
                         until = max(until, out_edge.target.aft)
                     if last_use:
-                        until = max(until, min_eft)
+                        until = max(until, latest_start +
+                                    (min_eft - selected_ast))
                         self.memory.free_tensor(in_edge.source, until)
 
             # append task to schedule
             task.procId = min_eft_procId + 1
-            task.ast = selected_ast
-            task.aft = min_eft
+            task.ast = latest_start
+            task.aft = latest_start + (min_eft - selected_ast)
             schedule[min_eft_procId].append(task)
             # update makespan
             if task.aft > makespan:
                 makespan = task.aft
 
-        self.memory.plot(makespan, filename='mem-heft-delay')
+        self.memory.plot(makespan, filename='heft-delay')
         self.plot(schedule, makespan, 'heft-delay')
         return schedule, makespan
 
