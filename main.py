@@ -20,17 +20,17 @@ END
 ---------------------------''')
 
 
-memory_size = 90
+memory_size = 160
 
 dag = DAG()
-dag.read_input('examples/sample.3.json')
+dag.read_input('examples/sample.1.json')
 # schedule, makespan = dag.schedule('heft')
 # print(makespan)
 # print_schedule(schedule, makespan)
 # try:
 #     schedule, makespan = dag.schedule('heft_delay', memory_size)
 #     # print_schedule(schedule, makespan, version='delay')
-#     print(makespan)
+#     # print(makespan)
 # except Exception as e:
 #     print(e)
 schedule, makespan = dag.schedule('heft_lookup', memory_size)

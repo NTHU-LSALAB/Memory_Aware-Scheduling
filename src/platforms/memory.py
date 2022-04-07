@@ -64,7 +64,7 @@ class Memory:
         bisect.insort(self.slots, new_slot)
         return new_slot
 
-    def plot(self, makespan=None, filename='memory-allocation'):
+    def plot(self, makespan=None, filename='allocation'):
         fig, ax = plt.subplots()
         for slot in self.slots:
             if slot.size == 0:
@@ -88,9 +88,9 @@ class Memory:
             x_ticks = np.append(ax.get_xticks(), makespan)
             ax.set_xticks(x_ticks)
 
-        if not os.path.exists('memory_allocation'):
-            os.mkdir('memory_allocation')
-        plt.savefig(f'memory_allocation/{filename}.png')
+        if not os.path.exists('out/memory'):
+            os.mkdir('out/memory')
+        plt.savefig(f'out/memory/{filename}.png')
 
 
 class Slot:

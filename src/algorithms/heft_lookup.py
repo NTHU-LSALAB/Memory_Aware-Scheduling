@@ -36,15 +36,15 @@ class HEFTLookup(AlgoBase):
             print('========================')
             print('Reserve', task.id)
             print('========================')
-            self.round_list = []
-            success = self.reserve(task)
+            self.rollback_list = []
+            success = self.reserve(task, 0)
             print('success:', success)
             if not success:
                 self.rollback(task)
             print('Reserved_list:', list(
                 map(lambda task: task.id, self.reserved_list)))
 
-        self.memory.plot(self.makespan, filename='mem-heft-lookup')
+        self.memory.plot(self.makespan, filename='heft-lookup')
         self.plot(self.schedule, self.makespan, 'heft-lookup')
         return self.schedule, self.makespan
 
@@ -55,8 +55,8 @@ class HEFTLookup(AlgoBase):
         if depth == -1:
             return True
 
-        if task not in self.round_list:
-            self.round_list.append(task)
+        if task not in self.rollback_list:
+            self.rollback_list.append(task)
         can_reserve = self.allocate_dependencies(task)
 
         # reserve for children
@@ -155,8 +155,8 @@ class HEFTLookup(AlgoBase):
         if depth == -1:
             return True
 
-        print('Rollback:', list(map(lambda task: task.id, self.round_list)))
-        for task in self.round_list:
+        print('Rollback:', list(map(lambda task: task.id, self.rollback_list)))
+        for task in self.rollback_list:
             task.rollback()
             if task in self.reserved_list:
                 self.reserved_list.remove(task)
@@ -166,17 +166,9 @@ class HEFTLookup(AlgoBase):
                     if t.id == task.id:
                         proc_schedule.remove(t)
 
-        # if task in self.reserved_list and task.round == self.round:
-        #     self.reserved_list.remove(task)
-        # self.memory.rollback(task.id, self.round)
-        # for proc_schedule in self.schedule:
-        #     for t in proc_schedule:
-        #         if t.id == task.id and t.round == task.round:
-        #             proc_schedule.remove(t)
-
     def allocate_dependencies(self, task: Task):
-        if task not in self.round_list:
-            self.round_list.append(task)
+        if task not in self.rollback_list:
+            self.rollback_list.append(task)
         checked = True
         for edge in task.in_edges:
             checked = checked and self.allocate_dependencies(edge.source)

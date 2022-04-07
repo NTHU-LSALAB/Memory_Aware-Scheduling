@@ -15,7 +15,7 @@ class AlgoBase:
 
     def schedule(self, tasks: list[Node], input: int) -> tuple[list[list[Node]], int]:
         pass
-    
+
     def plot(self, schedules: list[list[Node]], makespan, filename='heft'):
         fig, ax = plt.subplots()
         per_height = 20
@@ -39,9 +39,9 @@ class AlgoBase:
         x_ticks = np.append(ax.get_xticks(), makespan)
         ax.set_xticks(x_ticks)
 
-        if not os.path.exists('schedule'):
-            os.mkdir('schedule')
-        plt.savefig(f'schedule/{filename}.png')
+        if not os.path.exists('out/schedule'):
+            os.mkdir('out/schedule')
+        plt.savefig(f'out/schedule/{filename}.png')
 
     def bfs(self, entry_task: Node, op=None):
 

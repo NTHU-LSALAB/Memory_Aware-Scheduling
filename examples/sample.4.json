@@ -1,0 +1,148 @@
+[
+    {
+        "id": 1,
+        "name": 1,
+        "data": {},
+        "adjacencies": [
+            {
+                "nodeTo": 2,
+                "data": {}
+            }
+        ]
+    },
+    {
+        "id": 2,
+        "name": 2,
+        "data": {},
+        "adjacencies": [
+            {
+                "nodeTo": 6,
+                "data": {}
+            }
+        ]
+    },
+    {
+        "id": 6,
+        "name": 6,
+        "data": {},
+        "adjacencies": [
+            {
+                "nodeTo": "Exit",
+                "data": {}
+            }
+        ]
+    },
+    {
+        "id": 3,
+        "name": 3,
+        "data": {},
+        "adjacencies": [
+            {
+                "nodeTo": 10,
+                "data": {}
+            }
+        ]
+    },
+    {
+        "id": 10,
+        "name": 10,
+        "data": {},
+        "adjacencies": [
+            {
+                "nodeTo": "Exit",
+                "data": {}
+            }
+        ]
+    },
+    {
+        "id": 4,
+        "name": 4,
+        "data": {},
+        "adjacencies": [
+            {
+                "nodeTo": 9,
+                "data": {}
+            },
+            {
+                "nodeTo": 8,
+                "data": {}
+            }
+        ]
+    },
+    {
+        "id": 9,
+        "name": 9,
+        "data": {},
+        "adjacencies": [
+            {
+                "nodeTo": "Exit",
+                "data": {}
+            }
+        ]
+    },
+    {
+        "id": 8,
+        "name": 8,
+        "data": {},
+        "adjacencies": [
+            {
+                "nodeTo": "Exit",
+                "data": {}
+            }
+        ]
+    },
+    {
+        "id": "Start",
+        "name": "Start",
+        "data": {},
+        "adjacencies": [
+            {
+                "nodeTo": 1,
+                "data": {}
+            },
+            {
+                "nodeTo": 3,
+                "data": {}
+            },
+            {
+                "nodeTo": 4,
+                "data": {}
+            },
+            {
+                "nodeTo": 5,
+                "data": {}
+            },
+            {
+                "nodeTo": 7,
+                "data": {}
+            }
+        ]
+    },
+    {
+        "id": 5,
+        "name": 5,
+        "data": {},
+        "adjacencies": [
+            {
+                "nodeTo": "Exit",
+                "data": {}
+            }
+        ]
+    },
+    {
+        "id": 7,
+        "name": 7,
+        "data": {},
+        "adjacencies": [
+            {
+                "nodeTo": "Exit",
+                "data": {}
+            }
+        ]
+    },
+    {
+        "id": "Exit",
+        "name": "Exit",
+        "data": {}
+    }
+]
