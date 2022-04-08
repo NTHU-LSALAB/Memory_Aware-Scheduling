@@ -122,7 +122,7 @@ def plot_DAG(edges, postion, filename):
     g1 = nx.DiGraph()
     g1.add_edges_from(edges)
     nx.draw_networkx(g1, arrows=True, pos=postion)
-    plt.savefig('out/dag/'+filename, format="PNG")
+    plt.savefig(filename, format="PNG")
     return plt.clf
 
 
@@ -152,15 +152,6 @@ def workflows_generator(mode='default', n=10, max_out=2, alpha=1, beta=1.0, t_un
     edges, pos = DAGs_generate(
         mode, n, max_out, alpha, beta)
 
-    new_filename = args.out
-    if not new_filename:
-        onlyfiles = [f for f in listdir(
-            'examples') if isfile(join('examples', f))]
-        latest = int(
-            max(list(map(lambda file: file.split('.')[1], onlyfiles))))
-        new_filename = f'sample.{latest+1}'
-
-    plot_DAG(edges, pos, new_filename+'.png')
     dag = build_graph(edges)
 
     def transform(obj, key):
@@ -184,9 +175,20 @@ def workflows_generator(mode='default', n=10, max_out=2, alpha=1, beta=1.0, t_un
     dag['input'] = random_mem(r)
     dag['edges'] = dag['links']
     del dag['links']
-    with open('examples/'+new_filename+'.json', 'w') as f:
-        json.dump(dag, f, indent=4)
+
+    return dag, edges, pos
 
 
 if __name__ == '__main__':
-    workflows_generator()
+    dag, edges, pos = workflows_generator()
+    new_filename = args.out
+    if not new_filename:
+        onlyfiles = [f for f in listdir(
+            'examples') if isfile(join('examples', f))]
+        latest = int(
+            max(list(map(lambda file: file.split('.')[1], onlyfiles))))
+        new_filename = f'sample.{latest+1}'
+
+    plot_DAG(edges, pos, 'out/dag/'+new_filename+'.png')
+    with open('examples/'+new_filename+'.json', 'w') as f:
+        json.dump(dag, f, indent=4)

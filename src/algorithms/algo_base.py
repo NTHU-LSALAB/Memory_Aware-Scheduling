@@ -13,7 +13,7 @@ class AlgoBase:
     def set_memory(self, memory: Memory) -> None:
         self.memory = memory
 
-    def schedule(self, tasks: list[Node], input: int) -> tuple[list[list[Node]], int]:
+    def schedule(self, tasks: list[Node], input: int, options: dict) -> tuple[list[list[Node]], int]:
         pass
 
     def plot(self, schedules: list[list[Node]], makespan, filename='heft'):
@@ -42,6 +42,7 @@ class AlgoBase:
         if not os.path.exists('out/schedule'):
             os.mkdir('out/schedule')
         plt.savefig(f'out/schedule/{filename}.png')
+        plt.close()
 
     def bfs(self, entry_task: Node, op=None):
 

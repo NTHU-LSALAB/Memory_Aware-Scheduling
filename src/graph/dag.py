@@ -30,6 +30,7 @@ class DAG:
                 node = Task(
                     json_node["id"], json_node["costs"], json_node["output"], json_node.get("buffer", 10))
                 self.tasks.append(node)
+
             def task_compare(task1: Task, task2: Task):
                 return task1.id - task2.id
             self.tasks = sorted(self.tasks, key=cmp_to_key(task_compare))
@@ -40,12 +41,12 @@ class DAG:
                 source.out_edges.append(new_edge)
                 target.in_edges.append(new_edge)
 
-    def schedule(self, algo, memory=None) -> tuple[list[list[Task]], int]:
+    def schedule(self, algo, memory=None, algo_options: dict = {}) -> tuple[list[list[Task]], int]:
         algo = self.get_algo(algo)
         if memory:
             algo.memory = Memory(memory)
         tasks = copy.deepcopy(self.tasks)
-        return algo.schedule(tasks, input=self.input)
+        return algo.schedule(tasks, self.input, algo_options)
 
     def __repr__(self):
         string = '''DAG

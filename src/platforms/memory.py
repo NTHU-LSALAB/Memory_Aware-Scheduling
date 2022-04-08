@@ -5,8 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import numpy as np
 
-from graph.node import Node
-
+from platforms.task import Task
 
 class Memory:
     DEADLINE = 200
@@ -15,18 +14,40 @@ class Memory:
         self.slots = []
         self.size = size
 
-    def first_fit(self, size, interval, task, final=True, est=0):
+    def first_fit(self, size, interval, task: Task, final=True, can_delay = True):
         if size == 0:
             return True, None
-        est = max(est, interval[0])
-        interval = [est, est + interval[1] - interval[0]]
         overlap_slots = list(filter(
             lambda slot: slot.interval[0] < interval[1] and slot.interval[1] > interval[0], self.slots))
         if not overlap_slots:
             return True, self.allocate((0, size), interval, task, final)
 
-        # if task.id == 5:
-        #     print(interval, overlap_slots)
+        prev_addr = 0
+        for slot in overlap_slots:
+            if (slot.addr[0] - prev_addr) >= size:
+                return True, self.allocate([prev_addr, prev_addr+size],
+                                           interval, task, final)
+            prev_addr = max(slot.addr[1], prev_addr)
+        if (self.size - prev_addr) >= size:
+            return True, self.allocate([prev_addr, prev_addr+size], interval, task, final)
+        if can_delay:
+            # delay
+            delay_to = min([slot.interval[1] for slot in overlap_slots])
+            if delay_to == self.DEADLINE:
+                return False, None
+            interval = [delay_to, delay_to + (interval[1] - interval[0])]
+            return self.first_fit(size, interval, task, final, can_delay)
+        else:
+            return False, None
+
+    def best_fit(self, size, interval, task, final=True):
+        if size == 0:
+            return True, None
+        overlap_slots = list(filter(
+            lambda slot: slot.interval[0] < interval[1] and slot.interval[1] > interval[0], self.slots))
+        if not overlap_slots:
+            return True, self.allocate((0, size), interval, task, final)
+
         prev_addr = 0
         for slot in overlap_slots:
             if (slot.addr[0] - prev_addr) >= size:
@@ -41,7 +62,6 @@ class Memory:
             return False, None
         interval = [delay_to, delay_to + (interval[1] - interval[0])]
         return self.first_fit(size, interval, task, final)
-        # return False, None
 
     def rollback(self, tid: int):
         self.slots = list(filter(lambda slot: slot.task.id !=
@@ -55,14 +75,14 @@ class Memory:
             target_slot.interval[1] = until
             target_slot.final = True
 
-    def free_buffer(self, task):
-        print(task.id)
-
     def allocate(self, address, interval, task, final=True):
         # insert slot
         new_slot = Slot(address, interval, task, final)
         bisect.insort(self.slots, new_slot)
         return new_slot
+    
+    def max(self):
+        return max(list(map(lambda slot: slot.addr[1], self.slots)))
 
     def plot(self, makespan=None, filename='allocation'):
         fig, ax = plt.subplots()

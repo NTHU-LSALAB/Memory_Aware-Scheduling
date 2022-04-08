@@ -10,12 +10,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--input', '-i', default='examples/sample.1.json')
 args = parser.parse_args()
 
-memory_size = 90
+memory_size = 800
 
 dag = DAG()
 dag.read_input(args.input)
-schedule, makespan = dag.schedule('heft')
-print(makespan)
+schedule, makespan, usage = dag.schedule('heft')
+print(makespan, usage)
 # print_schedule(schedule, makespan)
 ###################### DELAY VERSION ######################
 # try:
@@ -27,7 +27,7 @@ print(makespan)
 ###################### LOOKUP VERSION ######################
 # schedule, makespan = dag.schedule('heft_lookup', memory_size)
 try:
-    schedule, makespan = dag.schedule('heft_lookup', memory_size)
+    schedule, makespan = dag.schedule('heft_lookup', memory_size, {"depth": 1})
     # print_schedule(schedule, makespan, version='lookup')
     print(makespan)
 except Exception as e:

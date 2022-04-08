@@ -8,3 +8,6 @@ examples/*
 !examples/simple.3.json
 
 out/**/*.png
+
+tmp
+tmp/**/*

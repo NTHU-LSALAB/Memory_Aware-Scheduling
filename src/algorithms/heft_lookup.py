@@ -8,7 +8,7 @@ from platforms.task import Task
 
 class HEFTLookup(AlgoBase):
 
-    def schedule(self, tasks: list[Task], input) -> tuple[list[list[Task]], int]:
+    def schedule(self, tasks: list[Task], input, options: dict) -> tuple[list[list[Task]], int]:
         print('lookup version')
         self.input = input
         self.reserved_list = []
@@ -32,16 +32,19 @@ class HEFTLookup(AlgoBase):
 
         # for rollback
         for task in sorted_tasks:
-            print('========================')
-            print('Reserve', task.id)
-            print('========================')
+            # print('========================')
+            # print('Reserve', task.id)
+            # print('========================')
             self.rollback_list = []
-            success = self.reserve(task, 0)
-            print('success:', success)
+            success = self.reserve(task, options.get('depth', 1))
+            # print('success:', success)
             if not success:
                 self.rollback(task)
-            print('Reserved_list:', list(
-                map(lambda task: task.id, self.reserved_list)))
+                # if is the last task, scheduling fails
+                if task == sorted_tasks[-1]:
+                    raise ValueError('Fail to allocate memory')
+            # print('Reserved_list:', list(
+            #     map(lambda task: task.id, self.reserved_list)))
 
         self.memory.plot(self.makespan, filename='heft-lookup')
         self.plot(self.schedule, self.makespan, 'heft-lookup')
@@ -69,7 +72,7 @@ class HEFTLookup(AlgoBase):
             return True
         if task not in self.rollback_list:
             self.rollback_list.append(task)
-        print('Allocate', task.id)
+        # print('Allocate', task.id)
         min_eft_procId = np.argmin(task.cost_table)
         min_eft = task.cost_table[min_eft_procId] if task is self.entry_task else maxsize
         # calculate start time
@@ -117,7 +120,7 @@ class HEFTLookup(AlgoBase):
 
         # allocate internal buffer
         ok, slot = self.memory.first_fit(
-            task.buffer_size, [latest_start, latest_start + min_eft - selected_ast], task, est=latest_start)
+            task.buffer_size, [latest_start, latest_start + min_eft - selected_ast], task)
         if slot:
             latest_start = max(latest_start, slot.interval[0])
         checked = checked and ok
@@ -154,7 +157,7 @@ class HEFTLookup(AlgoBase):
         if depth == -1:
             return True
 
-        print('Rollback:', list(map(lambda task: task.id, self.rollback_list)))
+        # print('Rollback:', list(map(lambda task: task.id, self.rollback_list)))
         for task in self.rollback_list:
             task.rollback()
             if task in self.reserved_list:
