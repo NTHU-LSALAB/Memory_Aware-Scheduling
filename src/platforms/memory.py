@@ -111,6 +111,7 @@ class Memory:
         if not os.path.exists('out/memory'):
             os.mkdir('out/memory')
         plt.savefig(f'out/memory/{filename}.png')
+        plt.close()
 
 
 class Slot:

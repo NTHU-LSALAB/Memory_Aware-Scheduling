@@ -123,7 +123,7 @@ def plot_DAG(edges, postion, filename):
     g1.add_edges_from(edges)
     nx.draw_networkx(g1, arrows=True, pos=postion)
     plt.savefig(filename, format="PNG")
-    return plt.clf
+    plt.close()
 
 
 def build_graph(edges):
@@ -184,11 +184,11 @@ if __name__ == '__main__':
     new_filename = args.out
     if not new_filename:
         onlyfiles = [f for f in listdir(
-            'examples') if isfile(join('examples', f))]
+            'samples') if isfile(join('samples', f))]
         latest = int(
             max(list(map(lambda file: file.split('.')[1], onlyfiles))))
         new_filename = f'sample.{latest+1}'
 
     plot_DAG(edges, pos, 'out/dag/'+new_filename+'.png')
-    with open('examples/'+new_filename+'.json', 'w') as f:
+    with open('samples/'+new_filename+'.json', 'w') as f:
         json.dump(dag, f, indent=4)

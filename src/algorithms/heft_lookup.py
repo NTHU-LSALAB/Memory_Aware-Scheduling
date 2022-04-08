@@ -9,7 +9,7 @@ from platforms.task import Task
 class HEFTLookup(AlgoBase):
 
     def schedule(self, tasks: list[Task], input, options: dict) -> tuple[list[list[Task]], int]:
-        print('lookup version')
+        # print('lookup version')
         self.input = input
         self.reserved_list = []
         self.makespan = 0

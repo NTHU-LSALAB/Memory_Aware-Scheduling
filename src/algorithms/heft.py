@@ -14,7 +14,7 @@ def task_compare(task1: Node, task2: Node):
 class HEFT(AlgoBase):
 
     def schedule(self, tasks: list[Node], input, options = {}) -> tuple[list[list[Node]], int]:
-        print('HEFT')
+        # print('HEFT')
         self.memory = Memory(1000)
         makespan = 0
         entry_task = next(

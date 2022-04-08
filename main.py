@@ -7,7 +7,7 @@ from lib.utils import print_schedule
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--input', '-i', default='examples/sample.1.json')
+parser.add_argument('--input', '-i', default='samples/sample.1.json')
 args = parser.parse_args()
 
 memory_size = 800
