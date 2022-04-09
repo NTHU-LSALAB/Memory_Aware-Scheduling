@@ -5,7 +5,6 @@ from platforms.dep import Dep
 from platforms.task import Task
 from algorithms.heft import HEFT
 from algorithms.heft_delay import HEFTDelay
-from algorithms.heft_bf import HEFTBrutoForce
 from platforms.memory import Memory
 import copy
 
@@ -16,7 +15,6 @@ class App:
             algo: AlgoBase = {
                 'heft': HEFT(),
                 'heft_delay': HEFTDelay(),
-                'heft_bf': HEFTBrutoForce(),
                 'heft_lookup': HEFTLookup()
             }[algo.lower()]
         return algo

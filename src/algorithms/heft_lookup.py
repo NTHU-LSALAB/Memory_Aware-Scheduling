@@ -10,6 +10,7 @@ class HEFTLookup(AlgoBase):
 
     def schedule(self, tasks: list[Task], input, options: dict) -> tuple[list[list[Task]], int]:
         # print('lookup version')
+        self.options = options
         self.input = input
         self.reserved_list = []
         self.makespan = 0
@@ -45,9 +46,9 @@ class HEFTLookup(AlgoBase):
                     raise ValueError('Fail to allocate memory')
             # print('Reserved_list:', list(
             #     map(lambda task: task.id, self.reserved_list)))
-
-        self.memory.plot(self.makespan, filename='heft-lookup')
-        self.plot(self.schedule, self.makespan, 'heft-lookup')
+        strategy = options.get('strategy', 'best')
+        self.memory.plot(self.makespan, filename=f'heft-lookup({strategy}-fit)')
+        self.plot(self.schedule, self.makespan, f'heft-lookup({strategy}-fit)')
         return self.schedule, self.makespan
 
     def reserve(self, task: Task, depth=1):
@@ -97,30 +98,30 @@ class HEFTLookup(AlgoBase):
         checked = True
         latest_start = selected_ast
         if task is self.entry_task:
-            ok, slot = self.memory.first_fit(
-                self.input, [selected_ast, min_eft], task)
+            ok, slot = self.memory.fit(
+                self.input, [selected_ast, min_eft], task, mode=self.options.get('strategy', 'best'))
             if slot:
                 latest_start = max(latest_start, slot.interval[0])
             checked = checked and ok
 
         # allocate output tensor
         if task is self.exit_task:
-            ok, slot = self.memory.first_fit(
-                task.output, [selected_ast, min_eft], task)
+            ok, slot = self.memory.fit(
+                task.output, [selected_ast, min_eft], task, mode=self.options.get('strategy', 'best'))
             if slot:
                 latest_start = max(latest_start, slot.interval[0])
             checked = checked and ok
         else:
             # allocate task's output tensor
-            ok, slot = self.memory.first_fit(task.out_edges[0].size, [
-                selected_ast, Memory.DEADLINE], task, final=False)
+            ok, slot = self.memory.fit(task.out_edges[0].size, [
+                selected_ast, Memory.DEADLINE], task, final=False, mode=self.options.get('strategy', 'best'))
             if slot:
                 latest_start = max(latest_start, slot.interval[0])
             checked = checked and ok
 
         # allocate internal buffer
-        ok, slot = self.memory.first_fit(
-            task.buffer_size, [latest_start, latest_start + min_eft - selected_ast], task)
+        ok, slot = self.memory.fit(
+            task.buffer_size, [latest_start, latest_start + min_eft - selected_ast], task, mode=self.options.get('strategy', 'best'))
         if slot:
             latest_start = max(latest_start, slot.interval[0])
         checked = checked and ok

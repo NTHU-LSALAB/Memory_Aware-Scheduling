@@ -1,3 +1,4 @@
+from platforms.task import Task
 import bisect
 import os
 import random
@@ -7,7 +8,6 @@ from matplotlib.patches import Rectangle
 import numpy as np
 plt.switch_backend('Agg')
 
-from platforms.task import Task
 
 class Memory:
     DEADLINE = sys.maxsize
@@ -16,7 +16,13 @@ class Memory:
         self.slots = []
         self.size = size
 
-    def first_fit(self, size, interval, task: Task, final=True, can_delay = True):
+    def fit(self, size, interval, task: Task, final=True, can_delay=True, mode='best'):
+        if mode == 'first':
+            return self.first_fit(size, interval, task, final, can_delay)
+        else:
+            return self.best_fit(size, interval, task, final, can_delay)
+
+    def first_fit(self, size, interval, task, final=True, can_delay=True):
         if size == 0:
             return True, None
         overlap_slots = list(filter(
@@ -24,14 +30,18 @@ class Memory:
         if not overlap_slots:
             return True, self.allocate((0, size), interval, task, final)
 
+        free_list = []
         prev_addr = 0
         for slot in overlap_slots:
             if (slot.addr[0] - prev_addr) >= size:
-                return True, self.allocate([prev_addr, prev_addr+size],
-                                           interval, task, final)
+                free_list.append([prev_addr, slot.addr[0]])
             prev_addr = max(slot.addr[1], prev_addr)
         if (self.size - prev_addr) >= size:
-            return True, self.allocate([prev_addr, prev_addr+size], interval, task, final)
+            free_list.append([prev_addr, self.size])
+        if free_list:
+            # return first fittable slot
+            start_at = free_list[0][0]
+            return True, self.allocate([start_at, start_at+size], interval, task, final)
         if can_delay:
             # delay
             delay_to = min([slot.interval[1] for slot in overlap_slots])
@@ -42,7 +52,7 @@ class Memory:
         else:
             return False, None
 
-    def best_fit(self, size, interval, task, final=True):
+    def best_fit(self, size, interval, task, final=True, can_delay=True):
         if size == 0:
             return True, None
         overlap_slots = list(filter(
@@ -50,20 +60,35 @@ class Memory:
         if not overlap_slots:
             return True, self.allocate((0, size), interval, task, final)
 
+        free_list = []
         prev_addr = 0
         for slot in overlap_slots:
             if (slot.addr[0] - prev_addr) >= size:
-                return True, self.allocate([prev_addr, prev_addr+size],
-                                           interval, task, final)
+                free_list.append([prev_addr, slot.addr[0]])
             prev_addr = max(slot.addr[1], prev_addr)
+
         if (self.size - prev_addr) >= size:
-            return True, self.allocate([prev_addr, prev_addr+size], interval, task, final)
-        # delay
-        delay_to = min([slot.interval[1] for slot in overlap_slots])
-        if delay_to == self.DEADLINE:
+            free_list.append([prev_addr, self.size])
+        if free_list:
+            min_size = free_list[0][1] - free_list[0][0]
+            min_id = 0
+            for i, slot in enumerate(free_list):
+                slot_size = slot[1] - slot[0]
+                if slot_size < min_size:
+                    min_size = slot_size
+                    min_id = i
+            start_at = free_list[min_id][0]
+            return True, self.allocate([start_at, start_at+size], interval, task, final)
+        
+        if can_delay:
+            # delay
+            delay_to = min([slot.interval[1] for slot in overlap_slots])
+            if delay_to == self.DEADLINE:
+                return False, None
+            interval = [delay_to, delay_to + (interval[1] - interval[0])]
+            return self.best_fit(size, interval, task, final)
+        else:
             return False, None
-        interval = [delay_to, delay_to + (interval[1] - interval[0])]
-        return self.first_fit(size, interval, task, final)
 
     def rollback(self, tid: int):
         self.slots = list(filter(lambda slot: slot.task.id !=
@@ -82,7 +107,7 @@ class Memory:
         new_slot = Slot(address, interval, task, final)
         bisect.insort(self.slots, new_slot)
         return new_slot
-    
+
     def max(self):
         return max(list(map(lambda slot: slot.addr[1], self.slots)))
 

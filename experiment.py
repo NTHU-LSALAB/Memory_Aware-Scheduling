@@ -10,8 +10,9 @@ import json
 from openpyxl import Workbook
 import argparse
 
-parser = argparse().ArgumentParser()
+parser = argparse.ArgumentParser()
 parser.add_argument('--mode', '-m', default='random')
+parser.add_argument('--strategy', '-s', default='best')
 args = parser.parse_args()
 
 
@@ -20,7 +21,7 @@ num_of_graph = 10
 depths = [0, 1, 2]
 
 random_id = str(uuid.uuid4())[:8]
-folder = f'{args.mode}.' + random_id
+folder = f'{args.mode}.{num_of_graph}.{args.strategy}.{random_id}'
 
 if not os.path.exists(folder):
     os.mkdir(folder)
@@ -50,7 +51,7 @@ def run_experiment():
     with open(f'{folder}/log/result.log', 'w') as log, open(f'{folder}/log/error.log', 'w') as error_log:
         wb = Workbook()
         ws = wb.active
-        ws.title = '100 Random Graphs'
+        ws.title = f'{num_of_graph} Random Graphs'
         ws.column_dimensions['A'].width = 15
 
         def worker(graph):
@@ -63,7 +64,7 @@ def run_experiment():
             log.write(f'HEFT ORIGIN: {makespan}, MEMEORY: {usage}\n')
             ws.append(['ORIGIN', makespan, usage])
             log.write(f'================= HEFT LOOKUP =================\n')
-            memory_sizes = [usage - 10*i for i in range(10)]
+            memory_sizes = [usage - 10*i for i in range(20)]
             ws.append(['Depth/Memory']+memory_sizes)
             for depth in depths:
                 depth_row = [depth]
@@ -71,7 +72,7 @@ def run_experiment():
                     log.write(f'DEPTH: {depth} MEMORY: {memory_size}\n')
                     try:
                         _, makespan = dag.schedule(
-                            'heft_lookup', memory_size, {"depth": depth})
+                            'heft_lookup', memory_size, {"depth": depth, "strategy": args.strategy})
                         log.write(f'{makespan}\n')
                         depth_row.append(makespan)
                     except Exception as e:
