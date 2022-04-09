@@ -11,3 +11,7 @@ out/**/*.png
 
 tmp*
 tmp*/**/*
+random*
+random*/**/*
+app*
+app*/**/*

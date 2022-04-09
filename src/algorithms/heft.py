@@ -15,7 +15,7 @@ class HEFT(AlgoBase):
 
     def schedule(self, tasks: list[Node], input, options = {}) -> tuple[list[list[Node]], int]:
         # print('HEFT')
-        self.memory = Memory(1000)
+        self.memory = Memory(sys.maxsize)
         makespan = 0
         entry_task = next(
             (task for task in tasks if len(task.in_edges) == 0), None)

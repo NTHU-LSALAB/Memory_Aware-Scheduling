@@ -8,6 +8,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import networkx as nx
 from networkx.readwrite import json_graph
+plt.switch_backend('Agg')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--mode', default='default',
@@ -21,7 +22,7 @@ parser.add_argument('--out')
 parser.add_argument('--processor', default=3)
 args = parser.parse_args()
 
-set_dag_size = [20, 30, 40, 50, 60, 70, 80, 90]  # random number of DAG  nodes
+set_dag_size = [10, 20, 30, 40, 50]  # random number of DAG  nodes
 set_max_out = [1, 2, 3, 4, 5]  # max out_degree of one node
 set_alpha = [0.5, 1.0, 1.5]  # DAG shape
 set_beta = [0.0, 0.5, 1.0, 2.0]  # DAG regularity
@@ -29,11 +30,19 @@ set_beta = [0.0, 0.5, 1.0, 2.0]  # DAG regularity
 
 def DAGs_generate(mode='default', n=10, max_out=2, alpha=1, beta=1.0):
     ##############################################initialize############################################
-    if mode != 'default':
+    if mode == 'random':
         args.n = random.sample(set_dag_size, 1)[0]
         args.max_out = random.sample(set_max_out, 1)[0]
         args.alpha = random.sample(set_alpha, 1)[0]
         args.beta = random.sample(set_alpha, 1)[0]
+        args.prob = 0.8
+    elif mode == 'app':
+        # args.n = random.sample(set_dag_size, 1)[0]
+        args.n = 20
+        args.max_out = random.sample(set_max_out[:3], 1)[0]
+        args.alpha = 1.5
+        args.beta = 1.0
+        args.prob = 0.8
     else:
         args.n = n
         args.max_out = max_out
@@ -180,13 +189,13 @@ def workflows_generator(mode='default', n=10, max_out=2, alpha=1, beta=1.0, t_un
 
 
 if __name__ == '__main__':
-    dag, edges, pos = workflows_generator()
+    dag, edges, pos = workflows_generator(mode='random')
     new_filename = args.out
     if not new_filename:
         onlyfiles = [f for f in listdir(
             'samples') if isfile(join('samples', f))]
         latest = int(
-            max(list(map(lambda file: file.split('.')[1], onlyfiles))))
+            max(list(map(lambda file: int(file.split('.')[1]), onlyfiles))))
         new_filename = f'sample.{latest+1}'
 
     plot_DAG(edges, pos, 'out/dag/'+new_filename+'.png')

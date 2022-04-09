@@ -1,14 +1,16 @@
 import bisect
 import os
 import random
+import sys
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import numpy as np
+plt.switch_backend('Agg')
 
 from platforms.task import Task
 
 class Memory:
-    DEADLINE = 200
+    DEADLINE = sys.maxsize
 
     def __init__(self, size=100):
         self.slots = []

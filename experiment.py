@@ -1,20 +1,26 @@
 import sys
-sys.path.insert(0, 'src')
 
-from openpyxl import Workbook
-import json
-import os
-from graph.dag import DAG
-from lib.generator import plot_DAG, workflows_generator
+from yaml import parse
+sys.path.insert(0, 'src')
 import uuid
+from lib.generator import plot_DAG, workflows_generator
+from graph.dag import DAG
+import os
+import json
+from openpyxl import Workbook
+import argparse
+
+parser = argparse().ArgumentParser()
+parser.add_argument('--mode', '-m', default='random')
+args = parser.parse_args()
 
 
 # Generate 100 graphs
-num_of_graph = 100
+num_of_graph = 10
 depths = [0, 1, 2]
 
 random_id = str(uuid.uuid4())[:8]
-folder = 'tmp.' + random_id
+folder = f'{args.mode}.' + random_id
 
 if not os.path.exists(folder):
     os.mkdir(folder)
@@ -25,13 +31,20 @@ if not os.path.exists(f'{folder}/dags'):
 if not os.path.exists(f'{folder}/log'):
     os.mkdir(f'{folder}/log')
 
+
 def generate_graph():
     print(f'Generating {num_of_graph} graphs...')
-    for graph in range(num_of_graph):
-        dag, edges, pos = workflows_generator()
+
+    def worker(graph):
+        dag, edges, pos = workflows_generator(mode=args.mode)
         plot_DAG(edges, pos, f'{folder}/dags/dag.{graph}.png')
         with open(f'{folder}/samples/exp.'+str(graph)+'.json', 'w') as f:
             json.dump(dag, f, indent=4)
+        print(f'Graph {graph:>2}... Done')
+
+    for graph in range(num_of_graph):
+        worker(graph)
+
 
 def run_experiment():
     with open(f'{folder}/log/result.log', 'w') as log, open(f'{folder}/log/error.log', 'w') as error_log:
@@ -39,7 +52,8 @@ def run_experiment():
         ws = wb.active
         ws.title = '100 Random Graphs'
         ws.column_dimensions['A'].width = 15
-        for graph in range(num_of_graph):
+
+        def worker(graph):
             print(f'Run graph {graph}...')
             ws.append([f'Graph {graph}'])
             log.write(f'================ Graph {graph} ================\n')
@@ -64,8 +78,11 @@ def run_experiment():
                         depth_row.append('N/A')
                         error_log.write(f'{e}\n')
                 ws.append(depth_row)
+
+        for graph in range(num_of_graph):
+            worker(graph)
         wb.save(f'{folder}/result.xlsx')
 
-if __name__ == '__main__':
-    generate_graph()
-    run_experiment()
+
+generate_graph()
+run_experiment()

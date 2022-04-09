@@ -4,6 +4,7 @@ from platforms.memory import Memory
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import numpy as np
+plt.switch_backend('Agg')
 
 
 class AlgoBase:
