@@ -7,7 +7,7 @@ from lib.utils import print_schedule
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--input', '-i', default='samples/sample.1.json')
+parser.add_argument('--input', '-i', default='samples/sample.3.json')
 args = parser.parse_args()
 
 memory_size = 130
@@ -19,12 +19,15 @@ print(makespan, usage)
 # print_schedule(schedule, makespan)
 ###################### LOOKUP VERSION ######################
 # schedule, makespan = dag.schedule('heft_lookup', memory_size)
-try:
-    schedule, makespan = dag.schedule('heft_lookup', memory_size, {"depth": 1, "strategy": "best"})
-    # print_schedule(schedule, makespan, version='lookup')
-    print('Best  Fit:', makespan)
-    schedule, makespan = dag.schedule('heft_lookup', memory_size, {"depth": 1, "strategy": "first"})
-    # print_schedule(schedule, makespan, version='lookup')
-    print('First Fit:', makespan)
-except Exception as e:
-    print(e)
+# try:
+#     schedule, makespan = dag.schedule('heft_lookup', memory_size, {"depth": 1, "strategy": "best"})
+#     # print_schedule(schedule, makespan, version='lookup')
+#     print('Best  Fit:', makespan)
+#     schedule, makespan = dag.schedule('heft_lookup', memory_size, {"depth": 1, "strategy": "first"})
+#     # print_schedule(schedule, makespan, version='lookup')
+#     print('First Fit:', makespan)
+# except Exception as e:
+#     print(e)
+###################### MEMFIRST VERSION ######################
+schedule, makespan, usage = dag.schedule('mem_first', 150)
+print(makespan, usage)

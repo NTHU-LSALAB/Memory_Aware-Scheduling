@@ -7,7 +7,7 @@ from platforms.memory import Memory
 from platforms.task import Task
 
 
-class HEFT(AlgoBase):
+class IPPTS(AlgoBase):
 
     def schedule(self, tasks: list[Task], input, options={}) -> tuple[list[list[Task]], int]:
         # print('HEFT')
@@ -70,20 +70,13 @@ class HEFT(AlgoBase):
 
         return schedule, makespan, self.memory.max()
 
-    def print_priority(self, entry_node: Task):
-        print('''UPPER RANKS
----------------------------
-Task    Rank
----------------------------''')
-        self.bfs(entry_node, op=lambda task: print(
-            f'{task.id}       {round(task.priority, 4)}'))
-
 
 def task_compare(task1: Task, task2: Task):
     return task2.priority - task1.priority
 
 
 def calculate_priority(task: Task):
+
     if task.priority:
         return task.priority
     max = 0
@@ -93,6 +86,10 @@ def calculate_priority(task: Task):
             max = cost
     task.priority = task.cost_avg + max
     return task.priority
+
+
+def calculate_pcm(task: Task):
+    pass
 
 
 def find_processor(task: Task, schedule):

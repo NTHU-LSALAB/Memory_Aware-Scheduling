@@ -2,10 +2,10 @@ from functools import cmp_to_key
 import json
 from algorithms.algo_base import AlgoBase
 from algorithms.heft_lookup import HEFTLookup
+from algorithms.mem_first import MemFirst
 from platforms.dep import Dep
 from platforms.task import Task
 from algorithms.heft import HEFT
-from algorithms.heft_delay import HEFTDelay
 from platforms.memory import Memory
 import copy
 
@@ -16,8 +16,8 @@ class DAG:
         if isinstance(algo, str):
             algo: AlgoBase = {
                 'heft': HEFT(),
-                'heft_delay': HEFTDelay(),
-                'heft_lookup': HEFTLookup()
+                'heft_lookup': HEFTLookup(),
+                'mem_first': MemFirst()
             }[algo.lower()]
         return algo
 

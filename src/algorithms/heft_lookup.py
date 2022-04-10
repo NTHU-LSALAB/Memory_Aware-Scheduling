@@ -1,7 +1,6 @@
-from sys import maxsize
 from algorithms.algo_base import AlgoBase
 from functools import cmp_to_key
-import numpy as np
+from algorithms.heft import calculate_priority, find_processor
 from platforms.memory import Memory
 from platforms.task import Task
 
@@ -14,21 +13,22 @@ class HEFTLookup(AlgoBase):
         self.input = input
         self.reserved_list = []
         self.makespan = 0
-        self.entry_task = next(
-            (task for task in tasks if len(task.in_edges) == 0), None)
-        self.exit_task = next(
-            (task for task in tasks if len(task.out_edges) == 0), None)
+        entry_task = next(
+            (task for task in tasks if task.is_entry()), None)
+        exit_task = next(
+            (task for task in tasks if task.is_exit()), None)
 
-        if self.entry_task is None or self.exit_task is None:
+        if entry_task is None or exit_task is None:
             raise ValueError('No entry or exit node')
 
-        self.calculate_rank(self.entry_task)
+        # calculate priority
+        calculate_priority(entry_task)
 
         def task_compare(task1: Task, task2: Task):
-            return task2.rank - task1.rank
+            return task2.priority - task1.priority
         sorted_tasks = sorted(tasks, key=cmp_to_key(task_compare))
         self.schedule: list[list[Task]] = [[]
-                                           for _ in range(len(self.entry_task.cost_table))]
+                                           for _ in range(len(entry_task.cost_table))]
         sorted_tasks = sorted_tasks
 
         # for rollback
@@ -47,9 +47,11 @@ class HEFTLookup(AlgoBase):
             # print('Reserved_list:', list(
             #     map(lambda task: task.id, self.reserved_list)))
         strategy = options.get('strategy', 'best')
-        self.memory.plot(self.makespan, filename=f'heft-lookup({strategy}-fit)')
-        self.plot(self.schedule, self.makespan, f'heft-lookup({strategy}-fit)')
-        return self.schedule, self.makespan
+        if options.get('plot', True):
+            self.memory.plot(
+                self.makespan, filename=f'heft-lookup({strategy}-fit)')
+            self.plot(self.schedule, self.makespan, f'heft-lookup({strategy}-fit)')
+        return self.schedule, self.makespan, self.memory.max()
 
     def reserve(self, task: Task, depth=1):
         return self.__reserve_re(task, depth)
@@ -68,67 +70,49 @@ class HEFTLookup(AlgoBase):
         return can_reserve
 
     def allocate_memory(self, task: Task):
-        # already allocated
+        # Already allocated
         if task in self.reserved_list:
             return True
+        # For rollback
         if task not in self.rollback_list:
             self.rollback_list.append(task)
-        # print('Allocate', task.id)
-        min_eft_procId = np.argmin(task.cost_table)
-        min_eft = task.cost_table[min_eft_procId] if task is self.entry_task else maxsize
-        # calculate start time
-        selected_ast = est = 0 if task is self.entry_task else max(
-            [edge.source.aft if edge.source.aft else 0 for edge in task.in_edges])
-        # choose a processor
-        for pid, cost in enumerate(task.cost_table):
-            proc_est = self.schedule[pid][-1].aft if len(
-                self.schedule[pid]) > 0 else est
 
-            # check if current task and its parents are on the same processor
-            for in_edge in task.in_edges:
-                if in_edge.source.procId-1 != pid:
-                    proc_est = max(in_edge.source.aft +
-                                   in_edge.weight, proc_est)
-            eft = proc_est + cost
-            if eft < min_eft:
-                selected_ast = proc_est
-                min_eft = eft
-                min_eft_procId = pid
-        # Check memory
-        checked = True
-        latest_start = selected_ast
-        if task is self.entry_task:
+        ####################### Schedule the task on a proccessor #######################
+        est, eft, pid = find_processor(task, self.schedule)
+        ################################ Allocate memory ################################
+        checked = True  # Accumulate checked
+        latest_start = est  # AST
+        mode = self.options.get('strategy', 'best')
+        # Allocate input tensor
+
+        if task.is_entry():
             ok, slot = self.memory.fit(
-                self.input, [selected_ast, min_eft], task, mode=self.options.get('strategy', 'best'))
+                self.input, [est, eft], task, mode=mode)
             if slot:
                 latest_start = max(latest_start, slot.interval[0])
             checked = checked and ok
 
-        # allocate output tensor
-        if task is self.exit_task:
-            ok, slot = self.memory.fit(
-                task.output, [selected_ast, min_eft], task, mode=self.options.get('strategy', 'best'))
-            if slot:
-                latest_start = max(latest_start, slot.interval[0])
-            checked = checked and ok
-        else:
-            # allocate task's output tensor
-            ok, slot = self.memory.fit(task.out_edges[0].size, [
-                selected_ast, Memory.DEADLINE], task, final=False, mode=self.options.get('strategy', 'best'))
-            if slot:
-                latest_start = max(latest_start, slot.interval[0])
-            checked = checked and ok
-
-        # allocate internal buffer
-        ok, slot = self.memory.fit(
-            task.buffer_size, [latest_start, latest_start + min_eft - selected_ast], task, mode=self.options.get('strategy', 'best'))
+        # Allocate a task's output tensor
+        ok, slot = self.memory.fit(task.output, [
+            est, eft if task.is_exit() else Memory.DEADLINE], task, final=False, mode=mode)
         if slot:
             latest_start = max(latest_start, slot.interval[0])
         checked = checked and ok
 
+        # Allocate internal buffer
+        ok, slot = self.memory.fit(
+            task.buffer_size, [latest_start, latest_start + eft - est], task, mode=mode)
+        if slot:
+            latest_start = max(latest_start, slot.interval[0])
+        checked = checked and ok
+
+        # Now we know the ast, aft
+        ast = latest_start
+        aft = latest_start + eft - est
+
         if checked:
-            # free input tensors
-            if task is not self.entry_task:
+            # Free input tensors
+            if not task.is_entry():
                 # check if inputs can be free
                 for in_edge in task.in_edges:
                     last_use = True
@@ -141,14 +125,14 @@ class HEFTLookup(AlgoBase):
                             break
                         until = max(until, out_edge.target.aft)
                     if last_use:
-                        until = max(until, latest_start +
-                                    (min_eft - selected_ast))
+                        until = max(until, aft)
                         self.memory.free_tensor(in_edge.source, until)
+
             self.reserved_list.append(task)
-            task.procId = min_eft_procId + 1
-            task.ast = latest_start
-            task.aft = latest_start + (min_eft - selected_ast)
-            self.schedule[min_eft_procId].append(task)
+            task.procId = pid + 1
+            task.ast = ast
+            task.aft = aft
+            self.schedule[pid].append(task)
             # update makespan
             if task.aft > self.makespan:
                 self.makespan = task.aft
@@ -175,21 +159,10 @@ class HEFTLookup(AlgoBase):
             checked = checked and self.allocate_dependencies(edge.source)
         return checked and self.allocate_memory(task)
 
-    def calculate_rank(self, task: Task):
-        if task.rank:
-            return task.rank
-        max = 0
-        for edge in task.out_edges:
-            cost = edge.weight + self.calculate_rank(edge.target)
-            if cost > max:
-                max = cost
-        task.rank = task.cost_avg + max
-        return task.rank
-
-    def print_rank(self, entry_task: Task):
+    def print_priority(self, entry_task: Task):
         print('''UPPER RANKS
 ---------------------------
 Task    Rank
 ---------------------------''')
         self.bfs(entry_task, op=lambda task: print(
-            f'{task.id}       {round(task.rank, 4)}'))
+            f'{task.id}       {round(task.priority, 4)}'))

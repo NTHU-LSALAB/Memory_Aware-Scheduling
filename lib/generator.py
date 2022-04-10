@@ -1,3 +1,4 @@
+from copy import deepcopy
 import json
 from os import listdir
 from os.path import isfile, join
@@ -28,7 +29,7 @@ set_alpha = [0.5, 1.0, 1.5]  # DAG shape
 set_beta = [0.0, 0.5, 1.0, 2.0]  # DAG regularity
 
 
-def DAGs_generate(mode='default', n=10, max_out=2, alpha=1, beta=1.0):
+def DAGs_generate(mode='default', n=10, max_out=2, alpha=1, beta=1.0, processor=3):
     ##############################################initialize############################################
     if mode == 'random':
         args.n = random.sample(set_dag_size, 1)[0]
@@ -50,6 +51,7 @@ def DAGs_generate(mode='default', n=10, max_out=2, alpha=1, beta=1.0):
         args.beta = beta
         args.prob = 1
 
+    args.processor = processor
     length = math.floor(math.sqrt(args.n)/args.alpha)
     mean_value = args.n/length
     random_num = np.random.normal(
@@ -155,11 +157,11 @@ def random_mem(r, is_buffer=False):
         return round(random.uniform(0.05 * r, 0.5 * r))
 
 
-def workflows_generator(mode='default', n=10, max_out=2, alpha=1, beta=1.0, t_unit=10, resource_unit=100):
+def workflows_generator(mode='default', n=10, max_out=2, alpha=1, beta=1.0, processor=3, processors=[3], t_unit=10, resource_unit=100):
     t = t_unit  # s   time unit
     r = resource_unit  # resource unit
     edges, pos = DAGs_generate(
-        mode, n, max_out, alpha, beta)
+        mode, n, max_out, alpha, beta, processor)
 
     dag = build_graph(edges)
 
@@ -171,9 +173,26 @@ def workflows_generator(mode='default', n=10, max_out=2, alpha=1, beta=1.0, t_un
         else:
             obj[key] = obj[key] + 1
 
+    # dags = []
+    # for processor in processors:
+    #     tmp = deepcopy(dag)
+    #     for node in tmp['nodes']:
+    #         transform(node, 'id')
+    #         node['costs'] = [random_cpu(t) for _ in range(processor)]
+    #         node['output'] = random_mem(r)
+    #         node['buffer'] = random_mem(r, True)
+
+    #     for link in tmp['links']:
+    #         transform(link, 'source')
+    #         transform(link, 'target')
+
+    #     tmp['input'] = random_mem(r)
+    #     tmp['edges'] = tmp['links']
+    #     del tmp['links']
+    #     dags.append(tmp)
     for node in dag['nodes']:
         transform(node, 'id')
-        node['costs'] = [random_cpu(t) for _ in range(args.processor)]
+        node['costs'] = [random_cpu(t) for _ in range(processor)]
         node['output'] = random_mem(r)
         node['buffer'] = random_mem(r, True)
 

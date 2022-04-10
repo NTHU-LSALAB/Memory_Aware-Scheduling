@@ -33,16 +33,18 @@ class AlgoBase:
 
                 plt.annotate(slot.id, (cx, cy), color='black', weight='bold',
                              fontsize=12, ha='center', va='center')
-        plt.ylim(0, height)
-        plt.xlim(0, makespan+10)
+        ax.set_xlim(0, makespan+10)
+        ax.set_ylim(0, height)
+        ax.set_xlabel('Time')
+        ax.set_ylabel('Processor')
 
-        plt.plot((makespan, makespan), (0, height), linestyle='dashed')
+        ax.plot((makespan, makespan), (0, height), linestyle='dashed')
         x_ticks = np.append(ax.get_xticks(), makespan)
         ax.set_xticks(x_ticks)
 
         if not os.path.exists('out/schedule'):
             os.mkdir('out/schedule')
-        plt.savefig(f'out/schedule/{filename}.png')
+        fig.savefig(f'out/schedule/{filename}.png')
         plt.close()
 
     def bfs(self, entry_task: Node, op=None):
