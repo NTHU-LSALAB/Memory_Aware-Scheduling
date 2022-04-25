@@ -17,3 +17,5 @@ app*
 app*/**/*
 default*
 default*/**/*
+processor*
+processor*/**/*

@@ -39,8 +39,8 @@ def DAGs_generate(mode='default', n=10, max_out=2, alpha=1, beta=1.0, processor=
         args.prob = 0.8
     elif mode == 'app':
         # args.n = random.sample(set_dag_size, 1)[0]
-        args.n = 20
-        args.max_out = random.sample(set_max_out[:3], 1)[0]
+        args.n = 30
+        args.max_out = 3
         args.alpha = 1.5
         args.beta = 1.0
         args.prob = 0.8
