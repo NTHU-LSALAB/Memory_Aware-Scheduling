@@ -41,6 +41,7 @@ class AlgoBase:
         ax.plot((makespan, makespan), (0, height), linestyle='dashed')
         x_ticks = np.append(ax.get_xticks(), makespan)
         ax.set_xticks(x_ticks)
+        print(filename)
 
         if not os.path.exists('out/schedule'):
             os.mkdir('out/schedule')

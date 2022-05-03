@@ -23,6 +23,7 @@ class Task(Node):
         # graph coloring
         self.buffer_color = None
         self.output_color = None
+        self.topics = []
         self.subscribers = []
 
     def rollback(self):
@@ -31,6 +32,7 @@ class Task(Node):
         self.procId = None
         self.buffer_color = None
         self.output_color = None
+        self.topics = []
         self.subscribers = []
 
     def is_entry(self):

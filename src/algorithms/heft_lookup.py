@@ -46,11 +46,11 @@ class HEFTLookup(AlgoBase):
                     raise ValueError('Fail to allocate memory')
             # print('Reserved_list:', list(
             #     map(lambda task: task.id, self.reserved_list)))
-        strategy = options.get('strategy', 'best')
+        # strategy = options.get('strategy', 'best')
         if options.get('plot', True):
             self.memory.plot(
-                self.makespan, filename=f'heft-lookup({strategy}-fit)')
-            self.plot(self.schedule, self.makespan, f'heft-lookup({strategy}-fit)')
+                self.makespan, filename=f'heft-lookup')
+            self.plot(self.schedule, self.makespan, f'heft-lookup')
         return self.schedule, self.makespan, self.memory.max()
 
     def reserve(self, task: Task, depth=1):

@@ -108,10 +108,17 @@ def find_processor(task: Task, schedule):
             schedule[pid]) > 0 else est
 
         # Check if current task and its parents are on the same processor
+        undones = []
         for in_edge in task.in_edges:
+            # parent not scheduled yet, cannot schedule this task
+            if not in_edge.source.procId:
+                undones.append(in_edge.source)
+                continue
             if in_edge.source.procId-1 != pid:
                 proc_est = max(in_edge.source.aft +
                                in_edge.weight, proc_est)
+        if undones:
+            raise Exception(undones)
         eft = proc_est + cost
         if eft < min_eft:
             selected_ast = proc_est

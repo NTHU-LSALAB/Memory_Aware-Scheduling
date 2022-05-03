@@ -24,24 +24,32 @@ class Memory:
             self.color_map[color] = [prev_addr, next_addr]
             prev_addr = next_addr
 
-    def place_task(self, est, eft, task):
+    def place_task(self, est, eft, task: Task):
         latest_start = est
-        output_ok, slot = self.place(task.output_color, task.output, [
+        # allocate output buffer
+        output_ok, output_slot = self.place(task.output_color, task.output, [
             est, eft if task.is_exit() else Memory.DEADLINE], task, final=False)
-        if slot:
-            latest_start = max(latest_start, slot.interval[0])
-        # print(latest_start, eft, est)
+        if output_ok:
+            latest_start = max(latest_start, output_slot.interval[0])
         # allocate internal buffer
-        buffer_ok, slot = self.place(
+        buffer_ok, buffer_slot = self.place(
             task.buffer_color,
             task.buffer_size, [latest_start, latest_start + eft - est], task)
-        if slot:
-            latest_start = max(latest_start, slot.interval[0])
+        if buffer_ok:
+            latest_start = max(latest_start, buffer_slot.interval[0])
 
         if output_ok and buffer_ok:
             return latest_start, latest_start+eft-est, True
         else:
             self.rollback(task.id)
+            if not isinstance(output_slot, Slot):
+                print('task', task.id, 'subscribe to', output_slot.id)
+                output_slot.subscribers.append(task)
+                task.topics.append(output_slot)
+            if not isinstance(buffer_slot, Slot):
+                print('task', task.id, 'subscribe to', buffer_slot.id)
+                buffer_slot.subscribers.append(task)
+                task.topics.append(buffer_slot)
             return None, None, False
 
     def place(self, color, size, interval, task, final=True):
@@ -56,12 +64,10 @@ class Memory:
             latest_id = np.argmax(
                 list(map(lambda slot: slot.interval[1], colorSlots)))
             et = colorSlots[latest_id].interval[1]
-        # print(et)
-        if et == sys.maxsize:
-            # print(task.id, self.slots[latest_id].task.id)
-            self.slots[latest_id].task.subscribers.append(
-                Subscriber(color, size, interval, task, final))
-            return False, None
+            # print(colorSlots)
+        # print(task.id, 'et', et, 'color:', color)
+        if et >= sys.maxsize:
+            return False, colorSlots[latest_id].task
         if interval[0] < et:
             interval = [et, et + interval[1] - interval[0]]
         return True, self.allocate([addr[0], addr[0] + size], interval, task, final, color)
@@ -162,7 +168,6 @@ class Memory:
         return max(list(map(lambda slot: slot.addr[1], self.slots)))
 
     def plot(self, makespan=None, filename='allocation'):
-        print(self.slots)
         fig, ax = plt.subplots()
         for slot in self.slots:
             if slot.size == 0:

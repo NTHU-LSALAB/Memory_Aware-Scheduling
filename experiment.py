@@ -1,17 +1,18 @@
 import sys
 sys.path.insert(0, 'src')
-from graph.dag import DAG
-import copy
-import matplotlib
-import matplotlib.pyplot as plt
-import argparse
-from openpyxl import Workbook
-import json
-import os
-from lib.generator import plot_DAG, workflows_generator
-import uuid
-import numpy as np
+
 import random
+import numpy as np
+import uuid
+from lib.generator import plot_DAG, workflows_generator
+import os
+import json
+from openpyxl import Workbook
+import argparse
+import matplotlib.pyplot as plt
+import matplotlib
+import copy
+from graph.dag import DAG
 
 # matplotlib.use('pdf')
 # matplotlib.rcParams.update({
@@ -42,7 +43,7 @@ if not os.path.exists(f'{folder}/dags'):
 if not os.path.exists(f'{folder}/log'):
     os.mkdir(f'{folder}/log')
 
-processors = [3, 4, 5, 6, 7]
+processors = [2, 3, 4, 5, 6, 7]
 
 
 def generate_graph():
@@ -50,8 +51,8 @@ def generate_graph():
 
     def worker(graph, processor):
         dag, edges, pos = workflows_generator(
-            mode=args.mode, processor=processor)
-        plot_DAG(edges, pos, f'{folder}/dags/dag.{graph}.png')
+            mode=args.mode, processor=processor, max_out=1, alpha=0.5, beta=0.5, n=40)
+        plot_DAG(edges, pos, f'{folder}/dags/dag.{graph}.{processor}.png')
         with open(f'{folder}/samples/exp.{graph}.{processor}.json', 'w') as f:
             json.dump(dag, f, indent=4)
 
