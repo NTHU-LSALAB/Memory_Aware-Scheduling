@@ -27,7 +27,7 @@ class MemFirst(AlgoBase):
         calculate_priority(entry_task)
         self.color_graph(entry_task)
         color_size, _ = self.decide_color_size()
-        print(color_size)
+        # print(color_size)
         self.memory.map_color_addr(color_size)
 
         sorted_tasks = sorted(tasks, key=cmp_to_key(task_compare))
@@ -38,8 +38,17 @@ class MemFirst(AlgoBase):
         for task in sorted_tasks:
             self.schedule_task(task)
 
-        self.memory.plot(self.makespan, 'mem-first')
-        self.plot(self.schedule, self.makespan, 'mem-first')
+        self.overlap_exploration()
+        if options.get('plot', True):
+            self.memory.plot(self.makespan, 'mem-first')
+            self.plot(self.schedule, self.makespan, 'mem-first')
+        
+        for task in self.tasks:
+            if not task.procId:
+                raise ValueError('Fail to schedule')
+        if self.memory.max() > self.memory.size:
+            raise ValueError('Fail to schedule')
+
         return self.schedule, self.makespan, self.memory.max()
 
     def schedule_task(self, task: Task):
@@ -47,7 +56,7 @@ class MemFirst(AlgoBase):
             est, eft, pid = find_processor(task, self.schedule)
         except Exception as e:
             for parent in e.args[0]:
-                print(task.id, 'subscribe to', parent.id)
+                # print(task.id, 'subscribe to', parent.id)
                 parent.subscribers.append(task)
                 task.topics.append(parent)
             return
@@ -62,7 +71,7 @@ class MemFirst(AlgoBase):
 
         if not cool:
             return
-        print('schedule', task.id, ast, aft)
+        # print('schedule', task.id, ast, aft)
         # free input tensors
         subscribers = []
         if not task.is_entry():
@@ -80,7 +89,7 @@ class MemFirst(AlgoBase):
                 if last_use:
                     until = max(until, aft)
                     self.memory.free_tensor(in_edge.source, until)
-                    print(task.id, 'free', in_edge.source.id)
+                    # print(task.id, 'free', in_edge.source.id)
                     for sub in in_edge.source.subscribers:
                         sub.topics = list(
                             filter(lambda topic: topic.id != in_edge.source.id, sub.topics))
@@ -103,6 +112,9 @@ Task    Rank
 ---------------------------''')
         self.bfs(entry_node, op=lambda task: print(
             f'{task.id}       {round(task.priority, 4)}'))
+    
+    def overlap_exploration(self):
+        self.memory.overlap_exploration()
 
     def color_graph(self, entry_node: Task):
         self.color_pool = set()
@@ -114,13 +126,13 @@ Task    Rank
     def color_task(self, task: Task):
         if task.buffer_color and task.output_color:
             return
-        print('free color:', self.free_color_list)
+        # print('free color:', self.free_color_list)
         buffer_color = self.pick_color(task.buffer_size)
         task.buffer_color = buffer_color
         output_color = self.pick_color(task.output)
         task.output_color = output_color
-        print('color', task.id, 'with color:',
-              f'b\'{buffer_color}', f'o\'{output_color}')
+        # print('color', task.id, 'with color:',
+        #       f'b\'{buffer_color}', f'o\'{output_color}')
         self.free_color_list.append(task.buffer_color)
         # Release input color
         if task.is_entry():
@@ -147,26 +159,26 @@ Task    Rank
         return color
 
     def pick_color(self, size):
-        # Maximize memory usage
         _, usage = self.decide_color_size()
         if not self.free_color_list:
-            if usage + size > self.memory.size:
-                raise ValueError('Fail to allocate memory!!')
+            # if usage + size > self.memory.size:
+            #     raise ValueError('Fail to allocate memory!!')
             return self.generate_color()
         else:
-            if usage + size <= self.memory.size:
-                print('new color!!')
-                return self.generate_color()
-            # best fit
-            min_size = self.memory.size
-            min_id = 0
-            for i, color in enumerate(self.free_color_list):
-                color_sizes, _ = self.decide_color_size()
-                color_size = color_sizes[color]
-                if color_size < min_size and color_size >= size:
-                    min_size = color_size
-                    min_id = i
-            return self.free_color_list.pop(min_id)
+            # if usage + size <= self.memory.size:
+            #     return self.generate_color()
+            # # best fit
+            # min_size = self.memory.size
+            # min_id = -1
+            # for i, color in enumerate(self.free_color_list):
+            #     color_sizes, _ = self.decide_color_size()
+            #     color_size = color_sizes[color]
+            #     if color_size < min_size and color_size >= size:
+            #         min_size = color_size
+            #         min_id = i
+            # if min_id == -1:
+            #     raise ValueError('Fail to allocate memory!!')
+            return self.free_color_list.pop(0)
 
     def decide_color_size(self):
         color_sizes = {}

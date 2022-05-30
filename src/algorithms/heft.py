@@ -24,6 +24,7 @@ class HEFT(AlgoBase):
         calculate_priority(entry_task)
 
         sorted_tasks = sorted(tasks, key=cmp_to_key(task_compare))
+        self.priority_list = list(map(lambda task: task.id, sorted_tasks))
         schedule: list[list[Task]] = [[]
                                       for _ in range(len(entry_task.cost_table))]
 

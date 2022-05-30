@@ -1,3 +1,4 @@
+from functools import cmp_to_key
 from platforms.task import Task
 import bisect
 import os
@@ -17,6 +18,13 @@ class Memory:
         self.size = size
         self.color_map = {}
 
+    def overlap_exploration(self):
+        for slot in self.slots:
+            overlap_slots = sorted(list(filter(
+                lambda s: s.interval[0] < slot.interval[1] and s.interval[1] > slot.interval[0] and s != slot and s.addr[0] < slot.addr[0], self.slots)), key=cmp_to_key(lambda slot1, slot2: slot1.addr[1] - slot2.addr[1]))
+            start = overlap_slots[-1].addr[1] if overlap_slots else 0
+            slot.addr = [start, start + slot.addr[1] - slot.addr[0]]
+
     def map_color_addr(self, color_size: dict):
         prev_addr = 0
         for color, size in color_size.items():
@@ -26,28 +34,28 @@ class Memory:
 
     def place_task(self, est, eft, task: Task):
         latest_start = est
-        # allocate output buffer
-        output_ok, output_slot = self.place(task.output_color, task.output, [
-            est, eft if task.is_exit() else Memory.DEADLINE], task, final=False)
-        if output_ok:
-            latest_start = max(latest_start, output_slot.interval[0])
         # allocate internal buffer
         buffer_ok, buffer_slot = self.place(
             task.buffer_color,
             task.buffer_size, [latest_start, latest_start + eft - est], task)
         if buffer_ok:
             latest_start = max(latest_start, buffer_slot.interval[0])
+        # allocate output buffer
+        output_ok, output_slot = self.place(task.output_color, task.output, [
+            latest_start, latest_start + eft - est if task.is_exit() else Memory.DEADLINE], task, final=False)
+        if output_ok:
+            latest_start = max(latest_start, output_slot.interval[0])
 
         if output_ok and buffer_ok:
             return latest_start, latest_start+eft-est, True
         else:
             self.rollback(task.id)
             if not isinstance(output_slot, Slot):
-                print('task', task.id, 'subscribe to', output_slot.id)
+                # print('task', task.id, 'subscribe to', output_slot.id)
                 output_slot.subscribers.append(task)
                 task.topics.append(output_slot)
             if not isinstance(buffer_slot, Slot):
-                print('task', task.id, 'subscribe to', buffer_slot.id)
+                # print('task', task.id, 'subscribe to', buffer_slot.id)
                 buffer_slot.subscribers.append(task)
                 task.topics.append(buffer_slot)
             return None, None, False
@@ -184,13 +192,14 @@ class Memory:
             # print(slot.task.id sif slot.task else 'I', slot.pos, slot.length, slot.size)
             plt.annotate(str(slot.task.id) + ('(B)' if slot.is_buffer else '(O)'), (cx, cy), color='w', weight='bold',
                          fontsize=12, ha='center', va='center')
-        ax.set_ylim(0, self.size)
+        ax.set_ylim(0, self.size + 10)
         ax.set_xlim(0, makespan+10 if makespan else self.DEADLINE)
         ax.set_xlabel('Time')
         ax.set_ylabel('Address')
 
         if makespan:
-            ax.plot((makespan, makespan), (0, self.size), linestyle='dashed')
+            ax.plot((makespan, makespan),
+                    (0, self.size + 10), linestyle='dashed')
             x_ticks = np.append(ax.get_xticks(), makespan)
             ax.set_xticks(x_ticks)
 

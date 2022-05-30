@@ -27,6 +27,7 @@ class HEFTLookup(AlgoBase):
         def task_compare(task1: Task, task2: Task):
             return task2.priority - task1.priority
         sorted_tasks = sorted(tasks, key=cmp_to_key(task_compare))
+        self.priority_list = list(map(lambda task: task.id, sorted_tasks))
         self.schedule: list[list[Task]] = [[]
                                            for _ in range(len(entry_task.cost_table))]
         sorted_tasks = sorted_tasks
