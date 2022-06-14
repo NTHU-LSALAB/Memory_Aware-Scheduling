@@ -4,15 +4,33 @@ sys.path.insert(0, 'src')
 import matplotlib.pyplot as plt
 import numpy as np
 from graph.dag import DAG
+import argparse
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--mode', '-m', default='p')
+args = parser.parse_args()
+
+widths = [3, 4, 5, 7]
+dependencies = [13, 15, 18, 20]
+sizes = [7, 10, 15, 22]
 processors = [2, 3, 4, 5]
 depths = [0, 1, 2]
-data = [[0 for _ in processors] for _ in range(3)]
-data_exec = [[0 for _ in processors] for _ in range(3)]
-for pid, processor in enumerate(processors):
-    print('======processor ' + str(processor) + '=======')
+
+name, exp_list = {
+    'p': ('processor', processors),
+    'w': ('width', widths),
+    'd': ('dependency', dependencies),
+    's': ('size', sizes)
+}[args.mode]
+
+
+
+data = [[0 for _ in exp_list] for _ in range(3)]
+data_exec = [[0 for _ in exp_list] for _ in range(3)]
+for id, exp in enumerate(exp_list):
+    print('======' + name + ' ' + str(exp) + '=======')
     dag = DAG()
-    dag.read_input(f'samples/sample.1.{processor}.json')
+    dag.read_input(f'samples/{name}/sample.{exp}.json')
     _, origin_makespan, usage = dag.schedule('heft')
     min_memory = min_memory2 = usage
     min_memory_makespan = min_memory_makespan2 = origin_makespan
@@ -32,7 +50,6 @@ for pid, processor in enumerate(processors):
                 min_makespan = min(min_makespan, makespan)
             except Exception:
                 pass
-    print('delay')
     for limit in memory_sizes:
         try:
             _, makespan, memory = dag.schedule('heft_delay', limit, {"plot": False})
@@ -44,16 +61,19 @@ for pid, processor in enumerate(processors):
             min_makespan2 = min(min_makespan2, makespan)
         except Exception as e:
             pass
-    # print(processor, 'processors')
-    print('memory:', min_memory, 'makespan:',
-          min_memory_makespan, 'origin memory:',  usage)
-    data[0][pid] = min_memory
-    data[1][pid] = min_memory2
-    data[2][pid] = usage
 
-    data_exec[0][pid] = min_memory_makespan
-    data_exec[1][pid] = min_memory_makespan2
-    data_exec[2][pid] = origin_makespan
+    print(f'Original Memory: {usage}, Original Makespan: {origin_makespan}')
+    print('HEFT lookup:', min_memory,  min_memory_makespan)
+    print('HEFT delay:', min_memory2,  min_memory_makespan2)
+    data[0][id] = min_memory
+    data[1][id] = min_memory2
+    data[2][id] = usage
+
+    # print(min_memory*min_makespan, min_memory2*min_makespan2)
+
+    data_exec[0][id] = min_memory_makespan
+    data_exec[1][id] = min_memory_makespan2
+    data_exec[2][id] = origin_makespan
 
 X = np.arange(len(processors))
 fig, ax = plt.subplots()
@@ -67,12 +87,12 @@ def autolabel(rects):
                 ha='center', va='bottom')
 autolabel(rects)
 autolabel(rects2)
-ax.set_xticks(X, labels=['2', '3', '4', '5'])
+ax.set_xticks(X, labels=exp_list)
 ax.legend(labels=['heft-lookup', 'heft-delay', 'heft'])
 ax.set_title("Minimal memory usage")
-ax.set_xlabel('# processors')
+ax.set_xlabel(f'# {name}')
 ax.set_ylabel('Usage')
-fig.savefig('exp.png')
+fig.savefig(f'experiments/results/{name}_memory.png')
 
 fig_exec, ax_exec = plt.subplots()
 rects = ax_exec.bar(X + 0.00, data_exec[0], color='#FF7F0C', width=0.25)
@@ -85,11 +105,11 @@ def autolabel_exec(rects):
                 ha='center', va='bottom')
 autolabel_exec(rects)
 autolabel(rects2)
-ax_exec.set_xticks(X, labels=['2', '3', '4', '5'])
+ax_exec.set_xticks(X, labels=exp_list)
 ax_exec.legend(labels=['heft-lookup', 'heft-delay', 'heft'])
 ax_exec.set_title("Increased makespan")
-ax_exec.set_xlabel('# processors')
+ax_exec.set_xlabel(f'# {name}')
 ax_exec.set_ylabel('Makespan')
-fig_exec.savefig('exp_exec.png')
+fig_exec.savefig(f'experiments/results/{name}_makespan.png')
 
 

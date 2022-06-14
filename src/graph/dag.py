@@ -44,11 +44,11 @@ class DAG:
                 target.in_edges.append(new_edge)
 
     def schedule(self, algo, memory=None, algo_options: dict = {}) -> tuple[list[list[Task]], int]:
-        algo = self.get_algo(algo)
+        self.algo = self.get_algo(algo)
         if memory:
-            algo.memory = Memory(memory)
+            self.algo.memory = Memory(memory)
         tasks = copy.deepcopy(self.tasks)
-        return algo.schedule(tasks, self.input, algo_options)
+        return self.algo.schedule(tasks, self.input, algo_options)
 
     def __repr__(self):
         string = '''DAG

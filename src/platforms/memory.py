@@ -17,6 +17,7 @@ class Memory:
         self.slots: list(Task) = []
         self.size = size
         self.color_map = {}
+        self.total_delay = 0
 
     def overlap_exploration(self):
         for slot in self.slots:
@@ -111,6 +112,7 @@ class Memory:
             delay_to = min([slot.interval[1] for slot in overlap_slots])
             if delay_to == self.DEADLINE:
                 return False, None
+            self.total_delay += delay_to - interval[0]
             interval = [delay_to, delay_to + (interval[1] - interval[0])]
             return self.first_fit(size, interval, task, final, can_delay)
         else:
@@ -149,6 +151,7 @@ class Memory:
             delay_to = min([slot.interval[1] for slot in overlap_slots])
             if delay_to == self.DEADLINE:
                 return False, None
+            self.total_delay += delay_to - interval[0]
             interval = [delay_to, delay_to + (interval[1] - interval[0])]
             return self.best_fit(size, interval, task, final)
         else:

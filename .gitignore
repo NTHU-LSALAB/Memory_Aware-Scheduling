@@ -2,20 +2,6 @@
 
 **/__pycache__
 
-samples/*
-!samples/sample.1.json
-!samples/sample.2.json
-!samples/sample.3.json
+samples/sample.2.*.json
 
 out/**/*.png
-
-tmp*
-tmp*/**/*
-random*
-random*/**/*
-app*
-app*/**/*
-default*
-default*/**/*
-processor*
-processor*/**/*
