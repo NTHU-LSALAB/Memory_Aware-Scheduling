@@ -1,10 +1,20 @@
 
+import os
 import sys
 sys.path.insert(0, 'src')
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 from graph.dag import DAG
 import argparse
+
+# matplotlib.use('pdf')
+# matplotlib.rcParams.update({
+#     "pgf.texsystem": "pdflatex",
+#     'font.family': 'serif',
+#     'text.usetex': True,
+#     'pgf.rcfonts': False,
+# })
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--mode', '-m', default='p')
@@ -92,7 +102,11 @@ ax.legend(labels=['heft-lookup', 'heft-delay', 'heft'])
 ax.set_title("Minimal memory usage")
 ax.set_xlabel(f'# {name}')
 ax.set_ylabel('Usage')
-fig.savefig(f'experiments/results/{name}_memory.png')
+if os.environ['latex']:
+    fig.savefig(f'experiments/results/{name}_memory.eps', format="eps", dpi=1200, bbox_inches="tight", transparent=True)
+else:
+    fig.savefig(f'experiments/results/{name}_memory.png')
+
 
 fig_exec, ax_exec = plt.subplots()
 rects = ax_exec.bar(X + 0.00, data_exec[0], color='#FF7F0C', width=0.25)
@@ -110,6 +124,9 @@ ax_exec.legend(labels=['heft-lookup', 'heft-delay', 'heft'])
 ax_exec.set_title("Increased makespan")
 ax_exec.set_xlabel(f'# {name}')
 ax_exec.set_ylabel('Makespan')
-fig_exec.savefig(f'experiments/results/{name}_makespan.png')
+if os.environ['latex']:
+    fig_exec.savefig(f'experiments/results/{name}_makespan.eps', format="eps", dpi=1200, bbox_inches="tight", transparent=True)
+else:
+    fig_exec.savefig(f'experiments/results/{name}_makespan.png')
 
 

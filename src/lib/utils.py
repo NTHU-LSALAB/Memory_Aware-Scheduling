@@ -1,3 +1,6 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
 def print_schedule(schedule, makespan, version=''):
     print(f'''HEFT {version} SCHEDULE
 ---------------------------
@@ -33,19 +36,37 @@ def get_parallelism_degree(schedule, makespan):
     counter = [0 for _ in schedule]
     busy_time = 0
     for t in range(makespan):
-        is_busy = True
+        busy_count = 0
         for p in range(processor_num):
-            if t < schedule[p][counter[p]].ast or t > schedule[p][counter[p]].aft:
-                is_busy = False
+            if t >= schedule[p][counter[p]].ast and t <= schedule[p][counter[p]].aft:
+                busy_count += 1
 
-            elif t == schedule[p][counter[p]].aft and counter[p] < len(schedule[p]) - 1:
+            if t == schedule[p][counter[p]].aft and counter[p] < len(schedule[p]) - 1:
                 counter[p] += 1
 
-        if is_busy:
-            busy_time += 1
+        busy_time += busy_count
 
-    return busy_time
+    return format(busy_time/makespan, '.2f')
 
+def show_parallelsim_degree(schedule, makespan):
+    # fig, ax = plt.subplots()
+    processor_num = len(schedule)
+    counter = [0 for _ in schedule]
+    data = []
+    for t in range(makespan):
+        busy_count = 0
+        for p in range(processor_num):
+            if t >= schedule[p][counter[p]].ast and t <= schedule[p][counter[p]].aft:
+                busy_count += 1
+
+            if t == schedule[p][counter[p]].aft and counter[p] < len(schedule[p]) - 1:
+                counter[p] += 1
+        data.append(busy_count)
+
+    # X = np.arange(makespan)
+    # plt.legend(str(depth))
+    # plt.step(X, data)
+    return data
 
 def diff(base, value):
     if isinstance(base, str):

@@ -1,3 +1,4 @@
+import os
 import sys
 sys.path.insert(0, 'src')
 
@@ -8,12 +9,12 @@ import numpy as np
 import random
 
 # matplotlib.use('pdf')
-# matplotlib.rcParams.update({
-#     "pgf.texsystem": "pdflatex",
-#     'font.family': 'serif',
-#     'text.usetex': True,
-#     'pgf.rcfonts': False,
-# })
+matplotlib.rcParams.update({
+    "pgf.texsystem": "pdflatex",
+    'font.family': 'serif',
+    'text.usetex': True,
+    'pgf.rcfonts': False,
+})
 
 depths = [0, 1, 2]
 
@@ -22,7 +23,7 @@ def run_experiment():
     fig, ax = plt.subplots()
 
     dag = DAG()
-    dag.read_input('./samples/sample.1.3.json')
+    dag.read_input('samples/sample.1.json')
     _, makespan_origin, usage = dag.schedule('heft')
     memory_sizes = [usage - 5*i for i in range(40)]
 
@@ -85,7 +86,10 @@ def run_experiment():
     ax.set_xlabel('Increased Makespan')
     ax.set_ylabel('Reduced Memory')
     # ax.set_ylim(-1, 0)
-    fig.savefig('tradeoff.png')
+    if os.environ['latex']:
+        fig.savefig('experiments/results/tradeoff.eps', format="eps", dpi=1200, bbox_inches="tight", transparent=True)
+    else:
+        fig.savefig('experiments/results/tradeoff.png')
     plt.close()
 
 

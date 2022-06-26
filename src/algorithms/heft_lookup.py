@@ -1,3 +1,4 @@
+from fileinput import filename
 from algorithms.algo_base import AlgoBase
 from functools import cmp_to_key
 from algorithms.heft import calculate_priority, find_processor
@@ -49,9 +50,10 @@ class HEFTLookup(AlgoBase):
             #     map(lambda task: task.id, self.reserved_list)))
         # strategy = options.get('strategy', 'best')
         if options.get('plot', True):
+            suffix = options.get('suffix', '')
             self.memory.plot(
-                self.makespan, filename=f'heft-lookup')
-            self.plot(self.schedule, self.makespan, f'heft-lookup')
+                self.makespan, filename=f'heft-lookup{suffix}')
+            self.plot(self.schedule, self.makespan, f'heft-lookup{suffix}')
         return self.schedule, self.makespan, self.memory.max()
 
     def reserve(self, task: Task, depth=1):

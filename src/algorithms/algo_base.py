@@ -33,6 +33,10 @@ class AlgoBase:
 
                 plt.annotate(slot.id, (cx, cy), color='black', weight='bold',
                              fontsize=12, ha='center', va='center')
+        X = [i*(per_height+gutter)+gutter+per_height /
+             2 for i in range(len(schedules))]
+        labels = [f'P{i+1}' for i, _ in enumerate(X)]
+        ax.set_yticks(X, labels=labels)
         ax.set_xlim(0, makespan+10)
         ax.set_ylim(0, height)
         ax.set_xlabel('Time')
