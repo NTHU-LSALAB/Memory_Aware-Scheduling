@@ -7,9 +7,18 @@ pip install matplotlib numpy
 python main.py
 ```
 
-Modify `main.py` to adopt different algorithm to see different results.
+## Experiment
 
-Fragmentation Case
-- Run `sample.3.json` with memory 90 and 85
-- You will see using 85 actually results in shorter execution
-- The reason is that node 2, 3's memory allocation is better with 85 memory
+```
+python experiments/min_memory.py
+python experiments/tradeoff.py
+python experiments/depth.py
+```
+
+## Samples
+
+You can find different DAGs under `samples` directory.
+- processor: same DAG but different # processors
+- width: DAGs with different widths
+- size: DAGS with same max width but different # nodes
+- dependency: same DAG but different # edges
