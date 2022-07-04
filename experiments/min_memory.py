@@ -102,7 +102,7 @@ ax.legend(labels=['heft-lookup', 'heft-delay', 'heft'])
 ax.set_title("Minimal memory usage")
 ax.set_xlabel(f'# {name}')
 ax.set_ylabel('Usage')
-if os.environ['latex']:
+if 'latex' in os.environ:
     fig.savefig(f'experiments/results/{name}_memory.eps', format="eps", dpi=1200, bbox_inches="tight", transparent=True)
 else:
     fig.savefig(f'experiments/results/{name}_memory.png')
@@ -124,7 +124,7 @@ ax_exec.legend(labels=['heft-lookup', 'heft-delay', 'heft'])
 ax_exec.set_title("Increased makespan")
 ax_exec.set_xlabel(f'# {name}')
 ax_exec.set_ylabel('Makespan')
-if os.environ['latex']:
+if 'latex' in os.environ:
     fig_exec.savefig(f'experiments/results/{name}_makespan.eps', format="eps", dpi=1200, bbox_inches="tight", transparent=True)
 else:
     fig_exec.savefig(f'experiments/results/{name}_makespan.png')

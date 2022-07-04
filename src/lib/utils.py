@@ -48,8 +48,25 @@ def get_parallelism_degree(schedule, makespan):
 
     return format(busy_time/makespan, '.2f')
 
+def get_parallelism_minmax(schedule, makespan):
+    minp = maxp = 1
+    processor_num = len(schedule)
+    counter = [0 for _ in schedule]
+    data = []
+    for t in range(makespan):
+        busy_count = 0
+        for p in range(processor_num):
+            if t >= schedule[p][counter[p]].ast and t <= schedule[p][counter[p]].aft:
+                busy_count += 1
+
+            if t == schedule[p][counter[p]].aft and counter[p] < len(schedule[p]) - 1:
+                counter[p] += 1
+        
+        if busy_count > maxp:
+            maxp = busy_count
+    return minp, maxp
+
 def show_parallelsim_degree(schedule, makespan):
-    # fig, ax = plt.subplots()
     processor_num = len(schedule)
     counter = [0 for _ in schedule]
     data = []
@@ -62,10 +79,6 @@ def show_parallelsim_degree(schedule, makespan):
             if t == schedule[p][counter[p]].aft and counter[p] < len(schedule[p]) - 1:
                 counter[p] += 1
         data.append(busy_count)
-
-    # X = np.arange(makespan)
-    # plt.legend(str(depth))
-    # plt.step(X, data)
     return data
 
 def diff(base, value):

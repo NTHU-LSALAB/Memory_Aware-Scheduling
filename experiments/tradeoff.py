@@ -86,7 +86,7 @@ def run_experiment():
     ax.set_xlabel('Increased Makespan')
     ax.set_ylabel('Reduced Memory')
     # ax.set_ylim(-1, 0)
-    if os.environ['latex']:
+    if 'latex' in os.environ:
         fig.savefig('experiments/results/tradeoff.eps', format="eps", dpi=1200, bbox_inches="tight", transparent=True)
     else:
         fig.savefig('experiments/results/tradeoff.png')
