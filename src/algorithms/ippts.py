@@ -21,54 +21,57 @@ class IPPTS(AlgoBase):
         if entry_task is None or exit_task is None:
             raise ValueError('No entry or exit node')
 
-        calculate_priority(entry_task)
+        calculate_pcm(entry_task)
+        for task in tasks:
+            calculate_priority(task)
 
         sorted_tasks = sorted(tasks, key=cmp_to_key(task_compare))
-        schedule: list[list[Task]] = [[]
-                                      for _ in range(len(entry_task.cost_table))]
-
         for task in sorted_tasks:
-            ast, aft, pid = find_processor(task, schedule)
+            schedule: list[list[Task]] = [[]
+                                          for _ in range(len(entry_task.cost_table))]
 
-            # allocate input tensor
-            if task is entry_task:
-                self.memory.fit(
-                    input, [ast, aft], task, can_delay=False)
-            # allocate output tensor
-            if task is exit_task:
-                self.memory.fit(
-                    task.output, [ast, aft], task, can_delay=False)
-            else:
-                # allocate task's output tensor
-                self.memory.fit(task.out_edges[0].size, [
-                    ast, Memory.DEADLINE], task, final=False, can_delay=False)
-            # allocate internal buffer
-            self.memory.fit(
-                task.buffer_size, [ast, aft], task, can_delay=False)
-            # free input tensors
-            if task is not entry_task:
-                # check if inputs can be free
-                for in_edge in task.in_edges:
-                    last_use = True
-                    until = -1
-                    for out_edge in in_edge.source.out_edges:
-                        if out_edge.target is task:
-                            continue
-                        if out_edge.target.procId is None:  # not allocate yet
-                            last_use = False
-                            break
-                        until = max(until, out_edge.target.aft)
-                    if last_use:
-                        until = max(until, aft)
-                        self.memory.free_tensor(in_edge.source, until)
-            task.procId = pid + 1
-            task.ast = ast
-            task.aft = aft
-            schedule[pid].append(task)
-            if task.aft > makespan:
-                makespan = task.aft
+            for task in sorted_tasks:
+                ast, aft, pid = find_processor(task, schedule)
 
-        return schedule, makespan, self.memory.max()
+                # allocate input tensor
+                if task is entry_task:
+                    self.memory.fit(
+                        input, [ast, aft], task, can_delay=False)
+                # allocate output tensor
+                if task is exit_task:
+                    self.memory.fit(
+                        task.output, [ast, aft], task, can_delay=False)
+                else:
+                    # allocate task's output tensor
+                    self.memory.fit(task.out_edges[0].size, [
+                        ast, Memory.DEADLINE], task, final=False, can_delay=False)
+                # allocate internal buffer
+                self.memory.fit(
+                    task.buffer_size, [ast, aft], task, can_delay=False)
+                # free input tensors
+                if task is not entry_task:
+                    # check if inputs can be free
+                    for in_edge in task.in_edges:
+                        last_use = True
+                        until = -1
+                        for out_edge in in_edge.source.out_edges:
+                            if out_edge.target is task:
+                                continue
+                            if out_edge.target.procId is None:  # not allocate yet
+                                last_use = False
+                                break
+                            until = max(until, out_edge.target.aft)
+                        if last_use:
+                            until = max(until, aft)
+                            self.memory.free_tensor(in_edge.source, until)
+                task.procId = pid + 1
+                task.ast = ast
+                task.aft = aft
+                schedule[pid].append(task)
+                if task.aft > makespan:
+                    makespan = task.aft
+
+            return schedule, makespan, self.memory.max()
 
 
 def task_compare(task1: Task, task2: Task):
@@ -79,17 +82,35 @@ def calculate_priority(task: Task):
 
     if task.priority:
         return task.priority
-    max = 0
-    for edge in task.out_edges:
-        cost = edge.weight + calculate_priority(edge.target)
-        if cost > max:
-            max = cost
-    task.priority = task.cost_avg + max
+    # max = 0
+    # for edge in task.out_edges:
+    #     cost = edge.weight + calculate_priority(edge.target)
+    #     if cost > max:
+    #         max = cost
+    # task.priority = task.cost_avg + max
+    rank_pcm = np.average(task.pcm)
+    p_rank = rank_pcm * len(task.out_edges)
+    task.priority = p_rank
     return task.priority
 
 
 def calculate_pcm(task: Task):
-    pass
+
+    if task.pcm[0]:
+        return task.pcm
+
+    max = 0
+    for edge in task.out_edges:
+        min = sys.maxsize
+        for cid, cost in enumerate(task.cost_table):
+            pcm = calculate_pcm(edge.target)
+            tmp = pcm[cid] + cost + edge.target.cost_table[cid]
+            if tmp < min:
+                min = tmp
+        if min > max:
+            max = min
+    task.pcm = [max, max, max]
+    return [max, max, max]
 
 
 def find_processor(task: Task, schedule):

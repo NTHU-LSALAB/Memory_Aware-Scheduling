@@ -18,17 +18,19 @@ app = App()
 app.read_input(args.input)
 schedule, makespan, usage = app.schedule('heft')
 print(makespan, usage)
+schedule, makespan, usage = app.schedule('ippts')
+print(makespan, usage)
 
 ###################### DELAY VERSION ######################
 # schedule, makespan, usage = app.schedule('heft_delay', 200)
 # print(makespan, usage, get_parallelism_degree(schedule, makespan))
 ###################### LOOKUP VERSION ######################
-schedule2, makespan2, usage2 = app.schedule('heft_lookup', 300, {"depth": 0})
-print(makespan2, usage2, get_parallelism_degree(schedule2, makespan2))
-schedule2, makespan2, usage2 = app.schedule('heft_lookup', 300, {"depth": 1, 'suffix': '-1'})
-print(makespan2, usage2, get_parallelism_degree(schedule2, makespan2))
-schedule2, makespan2, usage2 = app.schedule('heft_lookup', 300, {"depth": 2, 'suffix': '-2'})
-print(makespan2, usage2, get_parallelism_degree(schedule2, makespan2))
+# schedule2, makespan2, usage2 = app.schedule('heft_lookup', 300, {"depth": 0})
+# print(makespan2, usage2, get_parallelism_degree(schedule2, makespan2))
+# schedule2, makespan2, usage2 = app.schedule('heft_lookup', 300, {"depth": 1, 'suffix': '-1'})
+# print(makespan2, usage2, get_parallelism_degree(schedule2, makespan2))
+# schedule2, makespan2, usage2 = app.schedule('heft_lookup', 300, {"depth": 2, 'suffix': '-2'})
+# print(makespan2, usage2, get_parallelism_degree(schedule2, makespan2))
 
 ###################### MEMFIRST VERSION ######################
 # schedule, makespan, usage = dag.schedule('mem_first', 150)

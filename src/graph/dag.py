@@ -3,6 +3,7 @@ import json
 from algorithms.algo_base import AlgoBase
 from algorithms.heft_delay import HEFTDelay
 from algorithms.heft_lookup import HEFTLookup
+from algorithms.ippts import IPPTS
 from algorithms.mem_first import MemFirst
 from platforms.dep import Dep
 from platforms.task import Task
@@ -19,6 +20,7 @@ class DAG:
                 'heft': HEFT(),
                 'heft_delay': HEFTDelay(),
                 'heft_lookup': HEFTLookup(),
+                'ippts': IPPTS(),
                 'mem_first': MemFirst()
             }[algo.lower()]
         return algo

@@ -20,6 +20,8 @@ class Task(Node):
         self.procId: int = None
         self.output = output
         self.round = -1
+        # ippts
+        self.pcm = [None for _ in range(len(cost_table))]
         # graph coloring
         self.buffer_color = None
         self.output_color = None
