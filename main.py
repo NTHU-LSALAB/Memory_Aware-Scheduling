@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 
 
 parser = argparse.ArgumentParser()
-# parser.add_argument('--input', '-i', default='samples/sample.1.json')
-parser.add_argument('--input', '-i', default='samples/size/sample.15.json')
+parser.add_argument('--input', '-i', default='samples/sample.ippts.json')
+# parser.add_argument('--input', '-i', default='samples/sample.3.json')
 args = parser.parse_args()
 
 memory_size = 200
@@ -27,8 +27,10 @@ print(makespan, usage)
 ###################### LOOKUP VERSION ######################
 # schedule2, makespan2, usage2 = app.schedule('heft_lookup', 300, {"depth": 0})
 # print(makespan2, usage2, get_parallelism_degree(schedule2, makespan2))
-# schedule2, makespan2, usage2 = app.schedule('heft_lookup', 300, {"depth": 1, 'suffix': '-1'})
-# print(makespan2, usage2, get_parallelism_degree(schedule2, makespan2))
+schedule, makespan, usage = app.schedule('heft_lookup', 90, {"depth": 1, 'suffix': '-1'})
+print(makespan, usage)
+schedule, makespan, usage = app.schedule('ippts_lookup', 90, {"depth": 1, 'suffix': '-1'})
+print(makespan, usage)
 # schedule2, makespan2, usage2 = app.schedule('heft_lookup', 300, {"depth": 2, 'suffix': '-2'})
 # print(makespan2, usage2, get_parallelism_degree(schedule2, makespan2))
 

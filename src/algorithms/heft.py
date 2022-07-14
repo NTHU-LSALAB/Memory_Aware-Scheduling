@@ -25,6 +25,7 @@ class HEFT(AlgoBase):
 
         sorted_tasks = sorted(tasks, key=cmp_to_key(task_compare))
         self.priority_list = list(map(lambda task: task.id, sorted_tasks))
+        print(self.priority_list)
         schedule: list[list[Task]] = [[]
                                       for _ in range(len(entry_task.cost_table))]
 
@@ -69,6 +70,7 @@ class HEFT(AlgoBase):
             if task.aft > makespan:
                 makespan = task.aft
 
+        self.plot(schedule, makespan, 'heft-base')
         return schedule, makespan, self.memory.max()
 
     def print_priority(self, entry_node: Task):

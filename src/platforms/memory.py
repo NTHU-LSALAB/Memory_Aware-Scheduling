@@ -186,23 +186,26 @@ class Memory:
             color = "#"+''.join([random.choice('0123456789ABCDEF')
                                 for j in range(6)])
             rect = Rectangle(slot.pos, slot.length,
-                             slot.size, alpha=1, color=color)
+                             slot.size, alpha=1, ec="black", fc="#FAFEFF", lw=0.5)
             fig.gca().add_patch(rect)
             rx, ry = rect.get_xy()
-            cx = rx+4
+            cx = rx + rect.get_width()/2.0
             cy = ry + rect.get_height()/2.0
 
             # print(slot.task.id sif slot.task else 'I', slot.pos, slot.length, slot.size)
-            plt.annotate(str(slot.task.id) + ('(B)' if slot.is_buffer else '(O)'), (cx, cy), color='w', weight='bold',
-                         fontsize=12, ha='center', va='center')
-        ax.set_ylim(0, self.size + 10)
+            plt.annotate(('B' if slot.is_buffer else 'O') + str(slot.task.id), (cx, cy), color='black',
+                         fontsize=8, ha='center', va='center')
+        ax.set_ylim(0, self.max() + 10)
         ax.set_xlim(0, makespan+10 if makespan else self.DEADLINE)
         ax.set_xlabel('Time')
         ax.set_ylabel('Address')
+        if self.size is not sys.maxsize:
+            ax.axhline(y=self.size, color='red', linestyle='dashed')
+            y_ticks = np.append(ax.get_yticks(), self.size)
+            ax.set_yticks(y_ticks)
 
         if makespan:
-            ax.plot((makespan, makespan),
-                    (0, self.size + 10), linestyle='dashed')
+            ax.axvline(x=makespan, linestyle='dashed')
             x_ticks = np.append(ax.get_xticks(), makespan)
             ax.set_xticks(x_ticks)
 

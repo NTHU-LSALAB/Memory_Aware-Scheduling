@@ -1,9 +1,11 @@
 from functools import cmp_to_key
 import json
+import sys
 from algorithms.algo_base import AlgoBase
 from algorithms.heft_delay import HEFTDelay
 from algorithms.heft_lookup import HEFTLookup
 from algorithms.ippts import IPPTS
+from algorithms.ippts_lookup import IPPTSLookup
 from algorithms.mem_first import MemFirst
 from platforms.dep import Dep
 from platforms.task import Task
@@ -21,6 +23,7 @@ class DAG:
                 'heft_delay': HEFTDelay(),
                 'heft_lookup': HEFTLookup(),
                 'ippts': IPPTS(),
+                'ippts_lookup': IPPTSLookup(),
                 'mem_first': MemFirst()
             }[algo.lower()]
         return algo
@@ -41,7 +44,8 @@ class DAG:
             for json_edge in json_file["edges"]:
                 source = self.tasks[json_edge["source"] - 1]
                 target = self.tasks[json_edge["target"] - 1]
-                new_edge = Dep(source, target, source.output)
+                new_edge = Dep(source, target, source.output,
+                               json_edge.get("weight", 0))
                 source.out_edges.append(new_edge)
                 target.in_edges.append(new_edge)
 
@@ -49,6 +53,8 @@ class DAG:
         self.algo = self.get_algo(algo)
         if memory:
             self.algo.memory = Memory(memory)
+        else:
+            self.algo.memory = Memory(sys.maxsize)
         tasks = copy.deepcopy(self.tasks)
         return self.algo.schedule(tasks, self.input, algo_options)
 

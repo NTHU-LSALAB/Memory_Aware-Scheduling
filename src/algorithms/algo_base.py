@@ -25,14 +25,14 @@ class AlgoBase:
         for sid, schedule in enumerate(schedules):
             for slot in schedule:
                 rect = Rectangle((slot.ast, sid*(per_height+gutter) + gutter), slot.aft-slot.ast,
-                                 per_height, alpha=1, color='black', fill=None)
+                                 per_height, alpha=1, ec="black", fc="#FAFEFF", lw=0.5)
                 fig.gca().add_patch(rect)
                 rx, ry = rect.get_xy()
                 cx = rx + rect.get_width()/2.0
                 cy = ry + rect.get_height()/2.0
 
-                plt.annotate(slot.id, (cx, cy), color='black', weight='bold',
-                             fontsize=12, ha='center', va='center')
+                plt.annotate(slot.id, (cx, cy), color='black',
+                             fontsize=8, ha='center', va='center')
         X = [i*(per_height+gutter)+gutter+per_height /
              2 for i in range(len(schedules))]
         labels = [f'P{i+1}' for i, _ in enumerate(X)]
