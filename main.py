@@ -8,8 +8,9 @@ import matplotlib.pyplot as plt
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--input', '-i', default='samples/sample.1.json')
-# parser.add_argument('--input', '-i', default='samples/processor/sample.5.json')
+# parser.add_argument('--input', '-i', default='samples/sample.1.json')
+parser.add_argument('--input', '-i', default='samples/sample.3.json')
+# parser.add_argument('--input', '-i', default='samples/processor/sample.2.json')
 args = parser.parse_args()
 
 memory_size = 200
@@ -24,7 +25,7 @@ print(makespan, usage)
 # print(makespan, usage)
 
 ###################### DELAY VERSION ######################
-schedule, makespan, usage = app.schedule('heft_delay', 120)
+schedule, makespan, usage = app.schedule('heft_delay', 130)
 print(makespan, usage)
 schedule, makespan, usage = app.schedule('cpop_delay', 120)
 print(makespan, usage)
@@ -32,9 +33,9 @@ print(makespan, usage)
 ###################### LOOKUP VERSION ######################
 # schedule, makespan, usage = app.schedule('heft_lookup', 300, {"depth": 0})
 # print(makespan, usage)
-schedule, makespan, usage = app.schedule('heft_lookup', 130, {"depth": 1, 'suffix': '-1'})
+schedule, makespan, usage = app.schedule('heft_lookup', 110, {"depth": 1, 'suffix': '-1'})
 print(makespan, usage)
-schedule, makespan, usage = app.schedule('cpop_lookup', 130, {"depth": 1, 'suffix': '-1'})
+schedule, makespan, usage = app.schedule('cpop_lookup', 110, {"depth": 1, 'suffix': '-1'})
 print(makespan, usage)
 # schedule, makespan, usage = app.schedule('ippts_lookup', 90, {"depth": 1, 'suffix': '-1'})
 # print(makespan, usage)

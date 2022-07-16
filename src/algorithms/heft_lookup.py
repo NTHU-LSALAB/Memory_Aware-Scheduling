@@ -37,6 +37,11 @@ class HEFTLookup(AlgoBase):
             success = self.reserve(task, options.get('depth', 1))
             if not success:
                 self.rollback(task)
+
+            # update heap
+            for out_edge in task.out_edges:
+                heappush(self.task_heap, out_edge.target)
+
         if exit_task.procId == None:
             raise ValueError('Fail to allocate memory')
         if options.get('plot', True):
@@ -126,15 +131,6 @@ class HEFTLookup(AlgoBase):
             task.ast = ast
             task.aft = aft
 
-            # update heap
-            for out_edge in task.out_edges:
-                last_use = True
-                for in_edge in out_edge.target.in_edges:
-                    if in_edge.source.procId is None:
-                        last_use = False
-                if last_use:
-                    heappush(self.task_heap, out_edge.target)
-
             self.schedule[pid].append(task)
             # update makespan
             if task.aft > self.makespan:
@@ -160,9 +156,9 @@ class HEFTLookup(AlgoBase):
                     if t.id == task.id:
                         proc_schedule.remove(t)
             # remove successors from ready q
-            for out_edge in task.out_edges:
-                if out_edge.target in self.task_heap:
-                    self.task_heap.remove(out_edge.target)
+            # for out_edge in task.out_edges:
+            #     if out_edge.target in self.task_heap:
+            #         self.task_heap.remove(out_edge.target)
 
     def allocate_dependencies(self, task: Task):
         checked = True
