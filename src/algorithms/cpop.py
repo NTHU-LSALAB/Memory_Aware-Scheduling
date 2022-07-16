@@ -1,16 +1,17 @@
 from heapq import heapify, heappop, heappush
 import sys
 from algorithms.algo_base import AlgoBase
+from functools import cmp_to_key
 import numpy as np
 
 from platforms.memory import Memory
 from platforms.task import Task
 
 
-class HEFT(AlgoBase):
+class CPOP(AlgoBase):
 
     def schedule(self, tasks: list[Task], input, options={}) -> tuple[list[list[Task]], int]:
-        # print('HEFT')
+        # print('CPOP')
         self.memory = Memory(sys.maxsize)
         makespan = 0
         entry_task = next(
@@ -21,8 +22,12 @@ class HEFT(AlgoBase):
         if entry_task is None or exit_task is None:
             raise ValueError('No entry or exit node')
 
-        calculate_priority(entry_task)
-        
+        calculate_priority(entry_task, exit_task)
+        for task in tasks:
+            task.priority = task.rank_upward + task.rank_downward
+        set_critical_node(entry_task)
+        critical_procId = find_critical_processor(entry_task)
+
         schedule: list[list[Task]] = [[]
                                       for _ in range(len(entry_task.cost_table))]
 
@@ -31,8 +36,7 @@ class HEFT(AlgoBase):
 
         while len(task_heap):
             task = heappop(task_heap)
-
-            ast, aft, pid = find_processor(task, schedule)
+            ast, aft, pid = find_processor(task, schedule, critical_procId)
 
             # allocate input tensor
             if task is entry_task:
@@ -82,7 +86,7 @@ class HEFT(AlgoBase):
             if task.aft > makespan:
                 makespan = task.aft
 
-        self.plot(schedule, makespan, 'heft-base')
+        self.plot(schedule, makespan, 'cpop-base')
         return schedule, makespan, self.memory.max()
 
     def print_priority(self, entry_node: Task):
@@ -98,30 +102,75 @@ def task_compare(task1: Task, task2: Task):
     return task2.priority - task1.priority
 
 
-def calculate_priority(task: Task):
-    if task.priority:
-        return task.priority
+def set_critical_node(task: Task):
+    task.is_critical = True
+
+    critical_id = 0
+    max_priority = 0
+    for i, out_edge in enumerate(task.out_edges):
+        if out_edge.target.priority > max_priority:
+            max_priority = out_edge.target.priority
+            critical_id = i
+    if task.out_edges:
+        set_critical_node(task.out_edges[critical_id].target)
+
+
+def find_critical_processor(task: Task):
+    cost = culumlative_cost(task)
+    return np.argmin(cost)
+
+
+def culumlative_cost(task: Task):
+    cost = task.cost_table
+    for out_edge in task.out_edges:
+        if out_edge.target.is_critical:
+            cost = [sum(x)
+                    for x in zip(cost, culumlative_cost(out_edge.target))]
+            break
+    return cost
+
+
+def calculate_priority(entry_task: Task, exit_task: Task):
+    calculate_rank_downward(exit_task)
+    calculate_rank_upward(entry_task)
+
+
+def calculate_rank_upward(task: Task):
+    if task.rank_upward:
+        return task.rank_upward
     max = 0
     for edge in task.out_edges:
-        cost = edge.weight + calculate_priority(edge.target)
+        cost = edge.weight + calculate_rank_upward(edge.target)
         if cost > max:
             max = cost
-    task.priority = task.cost_avg + max
-    return task.priority
+    task.rank_upward = task.cost_avg + max
+    return task.rank_upward
 
 
-def find_processor(task: Task, schedule):
-    min_eft_procId = np.argmin(task.cost_table)
-    min_eft = task.cost_table[min_eft_procId] if task.is_entry(
-    ) else sys.maxsize
-    # Calculate start time
-    selected_ast = est = 0 if task.is_entry() else max(
-        [edge.source.aft if edge.source.aft else 0 for edge in task.in_edges])
-    # Choose a processor
-    for pid, cost in enumerate(task.cost_table):
-        proc_est = schedule[pid][-1].aft if len(
-            schedule[pid]) > 0 else est
+def calculate_rank_downward(task: Task):
+    if task.rank_downward:
+        return task.rank_downward
+    max = 0
+    for edge in task.in_edges:
+        cost = edge.weight + edge.source.cost_avg + \
+            calculate_rank_downward(edge.source)
+        if cost > max:
+            max = cost
+    task.rank_downward = max
+    return task.rank_downward
 
+
+def find_processor(task: Task, schedule, critical_procId):
+    if task.is_critical:
+        min_eft_procId = critical_procId
+        min_eft = task.cost_table[min_eft_procId] if task.is_entry(
+        ) else sys.maxsize
+        cost = task.cost_table[min_eft_procId]
+        # Calculate start time
+        selected_ast = est = 0 if task.is_entry() else max(
+            [edge.source.aft if edge.source.aft else 0 for edge in task.in_edges])
+        proc_est = schedule[critical_procId][-1].aft if len(
+            schedule[critical_procId]) > 0 else est
         # Check if current task and its parents are on the same processor
         undones = []
         for in_edge in task.in_edges:
@@ -129,7 +178,7 @@ def find_processor(task: Task, schedule):
             if not in_edge.source.procId:
                 undones.append(in_edge.source)
                 continue
-            if in_edge.source.procId-1 != pid:
+            if in_edge.source.procId-1 != critical_procId:
                 proc_est = max(in_edge.source.aft +
                                in_edge.weight, proc_est)
         if undones:
@@ -138,6 +187,34 @@ def find_processor(task: Task, schedule):
         if eft < min_eft:
             selected_ast = proc_est
             min_eft = eft
-            min_eft_procId = pid
+    else:
+        min_eft_procId = np.argmin(task.cost_table)
+        min_eft = task.cost_table[min_eft_procId] if task.is_entry(
+        ) else sys.maxsize
+        # Calculate start time
+        selected_ast = est = 0 if task.is_entry() else max(
+            [edge.source.aft if edge.source.aft else 0 for edge in task.in_edges])
+        # Choose a processor
+        for pid, cost in enumerate(task.cost_table):
+            proc_est = schedule[pid][-1].aft if len(
+                schedule[pid]) > 0 else est
+
+            # Check if current task and its parents are on the same processor
+            undones = []
+            for in_edge in task.in_edges:
+                # parent not scheduled yet, cannot schedule this task
+                if not in_edge.source.procId:
+                    undones.append(in_edge.source)
+                    continue
+                if in_edge.source.procId-1 != pid:
+                    proc_est = max(in_edge.source.aft +
+                                   in_edge.weight, proc_est)
+            if undones:
+                raise Exception(undones)
+            eft = proc_est + cost
+            if eft < min_eft:
+                selected_ast = proc_est
+                min_eft = eft
+                min_eft_procId = pid
 
     return selected_ast, min_eft, min_eft_procId

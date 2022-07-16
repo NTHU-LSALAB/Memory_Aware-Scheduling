@@ -2,6 +2,8 @@ from functools import cmp_to_key
 import json
 import sys
 from algorithms.algo_base import AlgoBase
+from algorithms.cpop import CPOP
+from algorithms.cpop_lookup import CPOPLookup
 from algorithms.heft_delay import HEFTDelay
 from algorithms.heft_lookup import HEFTLookup
 from algorithms.ippts import IPPTS
@@ -22,6 +24,8 @@ class DAG:
                 'heft': HEFT(),
                 'heft_delay': HEFTDelay(),
                 'heft_lookup': HEFTLookup(),
+                'cpop': CPOP(),
+                'cpop_lookup': CPOPLookup(),
                 'ippts': IPPTS(),
                 'ippts_lookup': IPPTSLookup(),
                 'mem_first': MemFirst()

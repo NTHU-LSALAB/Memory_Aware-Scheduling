@@ -1,6 +1,5 @@
-from fileinput import filename
+from heapq import heapify, heappop, heappush
 from algorithms.algo_base import AlgoBase
-from functools import cmp_to_key
 from algorithms.heft import calculate_priority, find_processor
 from platforms.memory import Memory
 from platforms.task import Task
@@ -25,30 +24,21 @@ class HEFTLookup(AlgoBase):
         # calculate priority
         calculate_priority(entry_task)
 
-        def task_compare(task1: Task, task2: Task):
-            return task2.priority - task1.priority
-        sorted_tasks = sorted(tasks, key=cmp_to_key(task_compare))
-        self.priority_list = list(map(lambda task: task.id, sorted_tasks))
         self.schedule: list[list[Task]] = [[]
                                            for _ in range(len(entry_task.cost_table))]
-        sorted_tasks = sorted_tasks
+
+        self.task_heap = [entry_task]
+        heapify(self.task_heap)
 
         # for rollback
-        for task in sorted_tasks:
-            # print('========================')
-            # print('Reserve', task.id)
-            # print('========================')
+        while len(self.task_heap):
+            task = heappop(self.task_heap)
             self.rollback_list = []
             success = self.reserve(task, options.get('depth', 1))
-            # print('success:', success)
             if not success:
                 self.rollback(task)
-                # if is the last task, scheduling fails
-                if task == sorted_tasks[-1]:
-                    raise ValueError('Fail to allocate memory')
-            # print('Reserved_list:', list(
-            #     map(lambda task: task.id, self.reserved_list)))
-        # strategy = options.get('strategy', 'best')
+        if exit_task.procId == None:
+            raise ValueError('Fail to allocate memory')
         if options.get('plot', True):
             suffix = options.get('suffix', '')
             self.memory.plot(
@@ -135,6 +125,16 @@ class HEFTLookup(AlgoBase):
             task.procId = pid + 1
             task.ast = ast
             task.aft = aft
+
+            # update heap
+            for out_edge in task.out_edges:
+                last_use = True
+                for in_edge in out_edge.target.in_edges:
+                    if in_edge.source.procId is None:
+                        last_use = False
+                if last_use:
+                    heappush(self.task_heap, out_edge.target)
+
             self.schedule[pid].append(task)
             # update makespan
             if task.aft > self.makespan:
@@ -147,14 +147,22 @@ class HEFTLookup(AlgoBase):
 
         # print('Rollback:', list(map(lambda task: task.id, self.rollback_list)))
         for task in self.rollback_list:
+            # reset task value
             task.rollback()
+            # remove from reserve list
             if task in self.reserved_list:
                 self.reserved_list.remove(task)
+            # remove memory allocation
             self.memory.rollback(task.id)
+            # remove from memory
             for proc_schedule in self.schedule:
                 for t in proc_schedule:
                     if t.id == task.id:
                         proc_schedule.remove(t)
+            # remove successors from ready q
+            for out_edge in task.out_edges:
+                if out_edge.target in self.task_heap:
+                    self.task_heap.remove(out_edge.target)
 
     def allocate_dependencies(self, task: Task):
         checked = True

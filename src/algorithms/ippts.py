@@ -1,3 +1,4 @@
+from heapq import heapify, heappop, heappush
 import sys
 from algorithms.algo_base import AlgoBase
 from functools import cmp_to_key
@@ -25,11 +26,13 @@ class IPPTS(AlgoBase):
         for task in tasks:
             calculate_priority(task)
 
-        sorted_tasks = sorted(tasks, key=cmp_to_key(task_compare))
         schedule: list[list[Task]] = [[]
                                       for _ in range(len(entry_task.cost_table))]
+        task_heap = [entry_task]
+        heapify(task_heap)
+        while len(task_heap):
+            task = heappop(task_heap)
 
-        for task in sorted_tasks:
             ast, aft, pid = find_processor(task, schedule)
             # print(ast, aft, pid)
 
@@ -68,6 +71,15 @@ class IPPTS(AlgoBase):
             task.ast = ast
             task.aft = aft
             schedule[pid].append(task)
+            # update heap
+            for out_edge in task.out_edges:
+                last_use = True
+                for in_edge in out_edge.target.in_edges:
+                    if in_edge.source.procId is None:
+                        last_use = False
+                if last_use:
+                    heappush(task_heap, out_edge.target)
+                    
             if task.aft > makespan:
                 makespan = task.aft
 

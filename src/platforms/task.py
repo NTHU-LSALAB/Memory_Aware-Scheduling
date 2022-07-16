@@ -22,6 +22,10 @@ class Task(Node):
         self.round = -1
         # ippts
         self.pcm = [None for _ in range(len(cost_table))]
+        # cpop
+        self.rank_upward: int = None
+        self.rank_downward: int = None
+        self.is_critical: bool = None
         # graph coloring
         self.buffer_color = None
         self.output_color = None
@@ -45,7 +49,14 @@ class Task(Node):
 
     def __repr__(self):
         return str({
+            'id': self.id,
             'buffer_size': self.buffer_size,
             'in_edges': 'empty' if len(self.in_edges) == 0 else self.in_edges,
             'out_edges': 'empty' if len(self.out_edges) == 0 else self.out_edges,
-        })
+        }) + '\n'
+ 
+    def __lt__(self, other):
+        return self.priority > other.priority
+ 
+    def __eq__(self, other):
+        return self.id == other.id

@@ -1,13 +1,11 @@
-from fileinput import filename
 from heapq import heapify, heappop, heappush
 from algorithms.algo_base import AlgoBase
-from functools import cmp_to_key
-from algorithms.ippts import calculate_pcm, calculate_priority, find_processor
+from algorithms.cpop import calculate_priority, find_critical_processor, find_processor, set_critical_node
 from platforms.memory import Memory
 from platforms.task import Task
 
 
-class IPPTSLookup(AlgoBase):
+class CPOPLookup(AlgoBase):
 
     def schedule(self, tasks: list[Task], input, options: dict) -> tuple[list[list[Task]], int]:
         # print('lookup version')
@@ -23,12 +21,12 @@ class IPPTSLookup(AlgoBase):
         if entry_task is None or exit_task is None:
             raise ValueError('No entry or exit node')
 
-        calculate_pcm(entry_task)
+        # calculate priority
+        calculate_priority(entry_task, exit_task)
         for task in tasks:
-            calculate_priority(task)
-
-        def task_compare(task1: Task, task2: Task):
-            return task2.priority - task1.priority
+            task.priority = task.rank_upward + task.rank_downward
+        set_critical_node(entry_task)
+        self.critical_procId = find_critical_processor(entry_task)
 
         self.schedule: list[list[Task]] = [[]
                                            for _ in range(len(entry_task.cost_table))]
@@ -48,8 +46,8 @@ class IPPTSLookup(AlgoBase):
         if options.get('plot', True):
             suffix = options.get('suffix', '')
             self.memory.plot(
-                self.makespan, filename=f'ippts-lookup{suffix}')
-            self.plot(self.schedule, self.makespan, f'ippts-lookup{suffix}')
+                self.makespan, filename=f'cpop-lookup{suffix}')
+            self.plot(self.schedule, self.makespan, f'cpop-lookup{suffix}')
         return self.schedule, self.makespan, self.memory.max()
 
     def reserve(self, task: Task, depth=1):
@@ -77,7 +75,7 @@ class IPPTSLookup(AlgoBase):
             self.rollback_list.append(task)
 
         ####################### Schedule the task on a proccessor #######################
-        est, eft, pid = find_processor(task, self.schedule)
+        est, eft, pid = find_processor(task, self.schedule, self.critical_procId)
         ################################ Allocate memory ################################
         checked = True  # Accumulate checked
         latest_start = est  # AST
@@ -140,7 +138,7 @@ class IPPTSLookup(AlgoBase):
                         last_use = False
                 if last_use:
                     heappush(self.task_heap, out_edge.target)
-                    
+
             self.schedule[pid].append(task)
             # update makespan
             if task.aft > self.makespan:

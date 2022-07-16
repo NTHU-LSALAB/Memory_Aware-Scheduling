@@ -10,4 +10,4 @@ class Edge:
         self.target = target
 
     def __repr__(self):
-        return f'{self.source} -> {self.target}'
+        return f'{self.source.id} -> {self.target.id}'

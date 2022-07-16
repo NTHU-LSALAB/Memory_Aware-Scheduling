@@ -1,3 +1,4 @@
+from heapq import heapify, heappop, heappush
 from algorithms.algo_base import AlgoBase
 from functools import cmp_to_key
 from algorithms.heft import calculate_priority, find_processor
@@ -20,13 +21,14 @@ class HEFTDelay(AlgoBase):
 
         calculate_priority(entry_task)
 
-        def task_compare(task1: Task, task2: Task):
-            return task2.priority - task1.priority
-        sorted_tasks = sorted(tasks, key=cmp_to_key(task_compare))
         schedule: list[list[Task]] = [[]
                                       for _ in range(len(entry_task.cost_table))]
+        task_heap = [entry_task]
+        heapify(task_heap)
 
-        for task in sorted_tasks:
+        while len(task_heap):
+            task = heappop(task_heap)
+            
             est, eft, pid = find_processor(task, schedule)
             latest_start = est  # AST
 
@@ -75,6 +77,16 @@ class HEFTDelay(AlgoBase):
             task.ast = ast
             task.aft = aft
             schedule[pid].append(task)
+
+            # update heap
+            for out_edge in task.out_edges:
+                last_use = True
+                for in_edge in out_edge.target.in_edges:
+                    if in_edge.source.procId is None:
+                        last_use = False
+                if last_use:
+                    heappush(task_heap, out_edge.target)
+                    
             # update makespan
             if task.aft > makespan:
                 makespan = task.aft
