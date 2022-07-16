@@ -9,29 +9,32 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--input', '-i', default='samples/sample.1.json')
-# parser.add_argument('--input', '-i', default='samples/sample.3.json')
+# parser.add_argument('--input', '-i', default='samples/processor/sample.5.json')
 args = parser.parse_args()
 
 memory_size = 200
 
 app = App()
-app.read_input(args.input)
+app.read_input(args.input, weight=False)
 schedule, makespan, usage = app.schedule('heft')
 print(makespan, usage)
 schedule, makespan, usage = app.schedule('cpop')
 print(makespan, usage)
-schedule, makespan, usage = app.schedule('ippts')
-print(makespan, usage)
+# schedule, makespan, usage = app.schedule('ippts')
+# print(makespan, usage)
 
 ###################### DELAY VERSION ######################
-# schedule, makespan, usage = app.schedule('heft_delay', 200)
+schedule, makespan, usage = app.schedule('heft_delay', 120)
+print(makespan, usage)
+schedule, makespan, usage = app.schedule('cpop_delay', 120)
+print(makespan, usage)
 # print(makespan, usage, get_parallelism_degree(schedule, makespan))
 ###################### LOOKUP VERSION ######################
 # schedule, makespan, usage = app.schedule('heft_lookup', 300, {"depth": 0})
 # print(makespan, usage)
-schedule, makespan, usage = app.schedule('heft_lookup', 120, {"depth": 1, 'suffix': '-1'})
+schedule, makespan, usage = app.schedule('heft_lookup', 130, {"depth": 1, 'suffix': '-1'})
 print(makespan, usage)
-schedule, makespan, usage = app.schedule('cpop_lookup', 120, {"depth": 1, 'suffix': '-1'})
+schedule, makespan, usage = app.schedule('cpop_lookup', 130, {"depth": 1, 'suffix': '-1'})
 print(makespan, usage)
 # schedule, makespan, usage = app.schedule('ippts_lookup', 90, {"depth": 1, 'suffix': '-1'})
 # print(makespan, usage)

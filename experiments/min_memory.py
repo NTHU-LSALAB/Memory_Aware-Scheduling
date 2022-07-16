@@ -18,6 +18,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--mode', '-m', default='p')
+parser.add_argument('--approach', '-a', default='heft')
 args = parser.parse_args()
 
 widths = [3, 4, 5, 7]
@@ -40,8 +41,8 @@ data_exec = [[0 for _ in exp_list] for _ in range(3)]
 for id, exp in enumerate(exp_list):
     print('======' + name + ' ' + str(exp) + '=======')
     dag = DAG()
-    dag.read_input(f'samples/{name}/sample.{exp}.json')
-    _, origin_makespan, usage = dag.schedule('heft')
+    dag.read_input(f'samples/{name}/sample.{exp}.json', weight=False)
+    _, origin_makespan, usage = dag.schedule(args.approach)
     min_memory = min_memory2 = usage
     min_memory_makespan = min_memory_makespan2 = origin_makespan
     # limit = usage
@@ -51,7 +52,7 @@ for id, exp in enumerate(exp_list):
         for depth in depths:
             try:
                 _, makespan, memory = dag.schedule(
-                    'heft_lookup', limit, {"depth": depth, "plot": False})
+                    f'{args.approach}_lookup', limit, {"depth": depth, "plot": False})
                 if makespan > 1000:
                     continue
                 if memory < min_memory:
@@ -62,7 +63,7 @@ for id, exp in enumerate(exp_list):
                 pass
     for limit in memory_sizes:
         try:
-            _, makespan, memory = dag.schedule('heft_delay', limit, {"plot": False})
+            _, makespan, memory = dag.schedule(f'{args.approach}_delay', limit, {"plot": False})
             if makespan > 1000:
                 continue
             if memory < min_memory2:
@@ -73,8 +74,8 @@ for id, exp in enumerate(exp_list):
             pass
 
     print(f'Original Memory: {usage}, Original Makespan: {origin_makespan}')
-    print('HEFT lookup:', min_memory,  min_memory_makespan)
-    print('HEFT delay:', min_memory2,  min_memory_makespan2)
+    print(f'{args.approach} lookup:', min_memory,  min_memory_makespan)
+    print(f'{args.approach} delay:', min_memory2,  min_memory_makespan2)
     data[0][id] = min_memory
     data[1][id] = min_memory2
     data[2][id] = usage
@@ -98,14 +99,14 @@ def autolabel(rects):
 autolabel(rects)
 autolabel(rects2)
 ax.set_xticks(X, labels=exp_list)
-ax.legend(labels=['heft-lookup', 'heft-delay', 'heft'])
-ax.set_title("Minimal memory usage")
+ax.legend(labels=[f'{args.approach}-lookup', f'{args.approach}-delay', f'{args.approach}'])
+# ax.set_title("Minimal memory usage")
 ax.set_xlabel(f'# {name}')
 ax.set_ylabel('Usage')
 if 'latex' in os.environ:
-    fig.savefig(f'experiments/results/{name}_memory.eps', format="eps", dpi=1200, bbox_inches="tight", transparent=True)
+    fig.savefig(f'experiments/results/{args.approach}_{name}_memory.eps', format="eps", dpi=1200, bbox_inches="tight", transparent=True)
 else:
-    fig.savefig(f'experiments/results/{name}_memory.png')
+    fig.savefig(f'experiments/results/{args.approach}_{name}_memory.png')
 
 
 fig_exec, ax_exec = plt.subplots()
@@ -120,13 +121,13 @@ def autolabel_exec(rects):
 autolabel_exec(rects)
 autolabel(rects2)
 ax_exec.set_xticks(X, labels=exp_list)
-ax_exec.legend(labels=['heft-lookup', 'heft-delay', 'heft'])
-ax_exec.set_title("Increased makespan")
+ax_exec.legend(labels=[f'{args.approach}-lookup', f'{args.approach}-delay', f'{args.approach}'])
+# ax_exec.set_title("Increased makespan")
 ax_exec.set_xlabel(f'# {name}')
 ax_exec.set_ylabel('Makespan')
 if 'latex' in os.environ:
-    fig_exec.savefig(f'experiments/results/{name}_makespan.eps', format="eps", dpi=1200, bbox_inches="tight", transparent=True)
+    fig_exec.savefig(f'experiments/results/{args.approach}_{name}_makespan.eps', format="eps", dpi=1200, bbox_inches="tight", transparent=True)
 else:
-    fig_exec.savefig(f'experiments/results/{name}_makespan.png')
+    fig_exec.savefig(f'experiments/results/{args.approach}_{name}_makespan.png')
 
 

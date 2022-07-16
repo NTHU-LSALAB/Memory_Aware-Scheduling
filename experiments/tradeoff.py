@@ -1,20 +1,24 @@
-import os
 import sys
 sys.path.insert(0, 'src')
-
+import os
 import matplotlib
 import matplotlib.pyplot as plt
 from graph.dag import DAG
 import numpy as np
 import random
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--approach', '-a', default='heft')
+args = parser.parse_args()
 
 # matplotlib.use('pdf')
-matplotlib.rcParams.update({
-    "pgf.texsystem": "pdflatex",
-    'font.family': 'serif',
-    'text.usetex': True,
-    'pgf.rcfonts': False,
-})
+# matplotlib.rcParams.update({
+#     "pgf.texsystem": "pdflatex",
+#     'font.family': 'serif',
+#     'text.usetex': True,
+#     'pgf.rcfonts': False,
+# })
 
 depths = [0, 1, 2]
 
@@ -23,11 +27,11 @@ def run_experiment():
     fig, ax = plt.subplots()
 
     dag = DAG()
-    dag.read_input('samples/sample.1.json')
-    _, makespan_origin, usage = dag.schedule('heft')
+    dag.read_input('samples/sample.1.json', weight=False)
+    _, makespan_origin, usage = dag.schedule(args.approach)
     memory_sizes = [usage - 5*i for i in range(40)]
 
-    def worker(method):
+    def worker(method, marker):
         data = []
         memorys = []
         for depth in depths:
@@ -68,28 +72,27 @@ def run_experiment():
             x = [i for j, i in enumerate(x) if j not in remove_indices]
             y = [i for j, i in enumerate(y) if j not in remove_indices]
             return x, y
-        
+
         x, y = remove_bad_points(data)
 
-        color = "#"+''.join([random.choice('0123456789ABCDEF')
-                            for _ in range(6)])
-        ax.plot(x, y, '--o', color=color, label=method)
+        ax.plot(x, y, marker, label=method, lw=1, color='#333333', dashes=(5, 3), markerfacecolor='none')
 
-    worker('heft_lookup')
-    worker('heft_delay')
+    worker(f'{args.approach}_lookup', '--o')
+    worker(f'{args.approach}_delay', '--x')
     ax.legend(loc="upper right")
 
     # for graph in range(num_of_graph):
     #     worker(graph)
     # wb.save(f'{folder}/result.xlsx')
-    ax.set_title("Memory-Makespan")
+    # ax.set_title("Memory-Makespan")
     ax.set_xlabel('Increased Makespan')
     ax.set_ylabel('Reduced Memory')
     # ax.set_ylim(-1, 0)
     if 'latex' in os.environ:
-        fig.savefig('experiments/results/tradeoff.eps', format="eps", dpi=1200, bbox_inches="tight", transparent=True)
+        fig.savefig(f'experiments/results/{args.approach}_tradeoff.eps',
+                    format="eps", dpi=1200, bbox_inches="tight", transparent=True)
     else:
-        fig.savefig('experiments/results/tradeoff.png')
+        fig.savefig(f'experiments/results/{args.approach}_tradeoff.png')
     plt.close()
 
 

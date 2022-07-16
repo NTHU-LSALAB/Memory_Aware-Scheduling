@@ -3,6 +3,7 @@ import json
 import sys
 from algorithms.algo_base import AlgoBase
 from algorithms.cpop import CPOP
+from algorithms.cpop_delay import CPOPDelay
 from algorithms.cpop_lookup import CPOPLookup
 from algorithms.heft_delay import HEFTDelay
 from algorithms.heft_lookup import HEFTLookup
@@ -25,6 +26,7 @@ class DAG:
                 'heft_delay': HEFTDelay(),
                 'heft_lookup': HEFTLookup(),
                 'cpop': CPOP(),
+                'cpop_delay': CPOPDelay(),
                 'cpop_lookup': CPOPLookup(),
                 'ippts': IPPTS(),
                 'ippts_lookup': IPPTSLookup(),
@@ -32,7 +34,7 @@ class DAG:
             }[algo.lower()]
         return algo
 
-    def read_input(self, filepath: str):
+    def read_input(self, filepath: str, weight = True):
         self.tasks: list[Task] = []
         with open(filepath, 'r') as f:
             json_file = json.load(f)
@@ -49,7 +51,7 @@ class DAG:
                 source = self.tasks[json_edge["source"] - 1]
                 target = self.tasks[json_edge["target"] - 1]
                 new_edge = Dep(source, target, source.output,
-                               json_edge.get("weight", 0))
+                               json_edge.get("weight", 0) if weight else 0)
                 source.out_edges.append(new_edge)
                 target.in_edges.append(new_edge)
 

@@ -7,13 +7,12 @@ import numpy as np
 from platforms.app import App
 
 app = App()
-app.read_input('samples/processor/sample.5.json')
+app.read_input('samples/processor/sample.5.json', weight=False)
 
 depths = [0, 1, 2]
 data = [0 for _ in range(len(depths))]
 data_minmax = [None for _ in range(len(depths))]
 _, _, usage = app.schedule('heft')
-print(usage)
 
 # Should we let the memory size constant?
 fig, ax = plt.subplots()

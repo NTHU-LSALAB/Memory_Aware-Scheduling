@@ -1,14 +1,18 @@
 from heapq import heapify, heappop, heappush
+import sys
 from algorithms.algo_base import AlgoBase
-from algorithms.heft import calculate_priority, find_processor
+from functools import cmp_to_key
+import numpy as np
+from algorithms.cpop import calculate_priority, find_critical_processor, find_processor, set_critical_node
+
 from platforms.memory import Memory
 from platforms.task import Task
 
 
-class HEFTDelay(AlgoBase):
+class CPOPDelay(AlgoBase):
 
-    def schedule(self, tasks: list[Task], input, options: dict) -> tuple[list[list[Task]], int]:
-        # print('delay version')
+    def schedule(self, tasks: list[Task], input, options={}) -> tuple[list[list[Task]], int]:
+        # print('CPOP')
         makespan = 0
         entry_task = next(
             (task for task in tasks if len(task.in_edges) == 0), None)
@@ -18,17 +22,22 @@ class HEFTDelay(AlgoBase):
         if entry_task is None or exit_task is None:
             raise ValueError('No entry or exit node')
 
-        calculate_priority(entry_task)
+        calculate_priority(entry_task, exit_task)
+        for task in tasks:
+            task.priority = task.rank_upward + task.rank_downward
+        set_critical_node(entry_task)
+        critical_procId = find_critical_processor(entry_task)
 
         schedule: list[list[Task]] = [[]
                                       for _ in range(len(entry_task.cost_table))]
+
         task_heap = [entry_task]
         heapify(task_heap)
 
         while len(task_heap):
             task = heappop(task_heap)
             
-            est, eft, pid = find_processor(task, schedule)
+            est, eft, pid = find_processor(task, schedule, critical_procId)
             latest_start = est  # AST
 
             # allocate input tensor
@@ -85,12 +94,11 @@ class HEFTDelay(AlgoBase):
                         last_use = False
                 if last_use:
                     heappush(task_heap, out_edge.target)
-                    
-            # update makespan
+
             if task.aft > makespan:
                 makespan = task.aft
 
         if options.get('plot', True):
-            self.memory.plot(makespan, filename='heft-delay')
-            self.plot(schedule, makespan, 'heft-delay')
+            self.memory.plot(makespan, filename='cpop-delay')
+            self.plot(schedule, makespan, 'cpop-delay')
         return schedule, makespan, self.memory.max()
