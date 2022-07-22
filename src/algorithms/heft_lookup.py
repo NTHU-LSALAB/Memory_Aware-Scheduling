@@ -7,7 +7,7 @@ from platforms.task import Task
 
 class HEFTLookup(AlgoBase):
 
-    def schedule(self, tasks: list[Task], input, options: dict) -> tuple[list[list[Task]], int]:
+    def schedule(self, tasks: list[Task], input, options: dict, format='default') -> tuple[list[list[Task]], int]:
         # print('lookup version')
         self.options = options
         self.input = input
@@ -48,6 +48,9 @@ class HEFTLookup(AlgoBase):
             suffix = options.get('suffix', '')
             self.memory.plot(
                 self.makespan, filename=f'heft-lookup{suffix}')
+            if options.get('snapshot'):
+                self.memory.plot_snapshot(
+                    self.makespan, filename=f'heft-lookup{suffix}')
             self.plot(self.schedule, self.makespan, f'heft-lookup{suffix}')
         return self.schedule, self.makespan, self.memory.max()
 

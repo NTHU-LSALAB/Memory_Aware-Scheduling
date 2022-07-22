@@ -7,7 +7,7 @@ from platforms.task import Task
 
 class HEFTDelay(AlgoBase):
 
-    def schedule(self, tasks: list[Task], input, options: dict) -> tuple[list[list[Task]], int]:
+    def schedule(self, tasks: list[Task], input, options: dict, format='default') -> tuple[list[list[Task]], int]:
         # print('delay version')
         makespan = 0
         entry_task = next(

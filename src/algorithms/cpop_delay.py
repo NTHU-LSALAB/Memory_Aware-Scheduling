@@ -11,7 +11,7 @@ from platforms.task import Task
 
 class CPOPDelay(AlgoBase):
 
-    def schedule(self, tasks: list[Task], input, options={}) -> tuple[list[list[Task]], int]:
+    def schedule(self, tasks: list[Task], input, options={}, format='default') -> tuple[list[list[Task]], int]:
         # print('CPOP')
         makespan = 0
         entry_task = next(

@@ -5,6 +5,7 @@
 samples/sample.2.*.json
 
 out/**/*.png
+out/**/*.eps
 
 experiments/results/**
 !experiments/results/.gitkeep

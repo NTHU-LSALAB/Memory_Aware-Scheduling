@@ -1,3 +1,5 @@
+from copy import deepcopy
+import shutil
 from functools import cmp_to_key
 from platforms.task import Task
 import bisect
@@ -13,11 +15,13 @@ plt.switch_backend('Agg')
 class Memory:
     DEADLINE = sys.maxsize
 
-    def __init__(self, size=100):
+    def __init__(self, size=100, snapshot=False):
         self.slots: list(Task) = []
         self.size = size
         self.color_map = {}
         self.total_delay = 0
+        self.snapshot = snapshot
+        self.snapshots = []
 
     def overlap_exploration(self):
         for slot in self.slots:
@@ -161,39 +165,47 @@ class Memory:
         self.slots = list(filter(lambda slot: slot.task.id !=
                           tid, self.slots))
 
-    def free_tensor(self, task: Task, until):
-        target_slots = list(
-            filter(lambda slot: slot.task is task and slot.final is False, self.slots))
+    def free_tensor(self, task, until):
+        if hasattr(task, 'mId'):
+            target_slots = list(
+                filter(lambda slot: slot.task.mId is task.mId and slot.final is False, self.slots))
+        else:
+            target_slots = list(
+                filter(lambda slot: slot.task is task and slot.final is False, self.slots))
         if target_slots:
             target_slot = target_slots[0]
             target_slot.interval[1] = until
             target_slot.final = True
+        if self.snapshot:
+            self.snapshots.append(deepcopy(self.slots))
 
     def allocate(self, address, interval, task, final=True, color=None):
         # insert slot
         new_slot = Slot(address, interval, task, final, color)
         bisect.insort(self.slots, new_slot)
+        if self.snapshot:
+            self.snapshots.append(deepcopy(self.slots))
         return new_slot
 
     def max(self):
         return max(list(map(lambda slot: slot.addr[1], self.slots)))
 
-    def plot(self, makespan=None, filename='allocation'):
+    def plot(self, makespan=None, filename='allocation', slots=None):
         fig, ax = plt.subplots()
-        for slot in self.slots:
+        slots = slots if slots else self.slots
+        for slot in slots:
             if slot.size == 0:
                 continue
-            color = "#"+''.join([random.choice('0123456789ABCDEF')
-                                for j in range(6)])
             rect = Rectangle(slot.pos, slot.length,
                              slot.size, alpha=1, ec="black", fc="#FAFEFF", lw=0.5)
             fig.gca().add_patch(rect)
             rx, ry = rect.get_xy()
-            cx = rx + rect.get_width()/2.0
+            cx = rx + (rect.get_width() /
+                       2.0 if slot.interval[1] <= makespan else 5)
             cy = ry + rect.get_height()/2.0
 
             # print(slot.task.id sif slot.task else 'I', slot.pos, slot.length, slot.size)
-            plt.annotate(('B' if slot.is_buffer else 'O') + str(slot.task.id), (cx, cy), color='black',
+            plt.annotate(('B' if slot.is_buffer else 'O') + str(slot.task.mId) if hasattr(slot.task, 'mId') else str(slot.task.id), (cx, cy), color='black',
                          fontsize=8, ha='center', va='center')
         ax.set_ylim(0, self.max() + 10)
         ax.set_xlim(0, makespan+10 if makespan else self.DEADLINE)
@@ -211,8 +223,19 @@ class Memory:
 
         if not os.path.exists('out/memory'):
             os.mkdir('out/memory')
-        fig.savefig(f'out/memory/{filename}.png')
+        if 'latex' in os.environ:
+            fig.savefig(f'out/memory/{filename}.eps', format="eps",
+                        dpi=1200, bbox_inches="tight", transparent=True)
+        else:
+            fig.savefig(f'out/memory/{filename}.png')
         plt.close()
+
+    def plot_snapshot(self, makespan=None, filename='allocation'):
+        if os.path.exists(f'out/memory/{filename}'):
+            shutil.rmtree(f'out/memory/{filename}')
+        os.mkdir(f'out/memory/{filename}')
+        for i, snapshot in enumerate(self.snapshots):
+            self.plot(makespan, f'{filename}/snapshot{i+1}', snapshot)
 
 
 class Slot:
@@ -240,7 +263,8 @@ class Slot:
         return self.addr[0] < other.addr[0]
 
     def __repr__(self):
-        id = self.task.id if self.task else 'IO'
+        id = self.task.mId if hasattr(self.task, 'mId') else (
+            self.task.id if self.task else 'IO')
         # return f'\n(id: {id}, final: {self.final}, round: {self.task.round})'
         # return f'\n(id: {id}, start: {self.addr[0]}, end: {self.addr[1]})'
         return f'\n(id: {id}, start: {self.interval[0]}, end: {self.interval[1]}, addr: ({self.addr[0]}, {self.addr[1]}))'

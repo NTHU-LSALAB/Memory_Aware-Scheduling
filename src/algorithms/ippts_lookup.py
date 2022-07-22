@@ -9,7 +9,7 @@ from platforms.task import Task
 
 class IPPTSLookup(AlgoBase):
 
-    def schedule(self, tasks: list[Task], input, options: dict) -> tuple[list[list[Task]], int]:
+    def schedule(self, tasks: list[Task], input, options: dict, format='default') -> tuple[list[list[Task]], int]:
         # print('lookup version')
         self.options = options
         self.input = input

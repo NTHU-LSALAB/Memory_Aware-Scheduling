@@ -10,7 +10,7 @@ from platforms.task import Task
 
 class MemFirst(AlgoBase):
 
-    def schedule(self, tasks: list[Task], input, options={}) -> tuple[list[list[Task]], int]:
+    def schedule(self, tasks: list[Task], input, options={}, format='default') -> tuple[list[list[Task]], int]:
         # print('HEFT')
         self.input = input
         self.input_color = None

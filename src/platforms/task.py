@@ -1,11 +1,5 @@
 from functools import reduce
-from typing import TYPE_CHECKING
-
 from graph.node import Node
-
-if TYPE_CHECKING:
-    from platforms.dep import Dep
-
 
 class Task(Node):
     def __init__(self, id: int, cost_table: list[int], output: int, buffer_size: int = 0):
@@ -14,7 +8,6 @@ class Task(Node):
         self.cost_table = cost_table
         self.cost_avg: float = reduce(
             lambda a, b: a+b, self.cost_table) / len(self.cost_table)
-        self.priority: int = None
         self.ast: int = None
         self.aft: int = None
         self.procId: int = None
@@ -41,11 +34,21 @@ class Task(Node):
         self.topics = []
         self.subscribers = []
 
-    def is_entry(self):
-        return len(self.in_edges) == 0
+    @property
+    def t_out_edges(self):
+        return list(filter(lambda edge: not hasattr(edge.target, 'mId'), self.out_edges))
 
-    def is_exit(self):
-        return len(self.out_edges) == 0
+    @property
+    def t_in_edges(self):
+        return list(filter(lambda edge: not hasattr(edge.source, 'mId'), self.in_edges))
+
+    @property
+    def m_out_edges(self):
+        return list(filter(lambda edge: hasattr(edge.target, 'mId'), self.out_edges))
+
+    @property
+    def m_in_edges(self):
+        return list(filter(lambda edge: hasattr(edge.source, 'mId'), self.in_edges))
 
     def __repr__(self):
         return str({
@@ -54,9 +57,27 @@ class Task(Node):
             'in_edges': 'empty' if len(self.in_edges) == 0 else self.in_edges,
             'out_edges': 'empty' if len(self.out_edges) == 0 else self.out_edges,
         }) + '\n'
- 
-    def __lt__(self, other):
-        return self.priority > other.priority
- 
-    def __eq__(self, other):
-        return self.id == other.id
+
+class MTask(Node):
+    def __init__(self, id: int, mId: int, type: str, buffer: int):
+        super().__init__(id)
+        self.mId = mId
+        self.type = type
+        self.buffer = buffer
+
+    @property
+    def t_out_edges(self):
+        return list(filter(lambda edge: not hasattr(edge.target, 'mId'), self.out_edges))
+
+    @property
+    def t_in_edges(self):
+        return list(filter(lambda edge: not hasattr(edge.source, 'mId'), self.in_edges))
+
+    @property
+    def m_out_edges(self):
+        return list(filter(lambda edge: hasattr(edge.target, 'mId'), self.out_edges))
+
+    @property
+    def m_in_edges(self):
+        return list(filter(lambda edge: hasattr(edge.source, 'mId'), self.in_edges))
+

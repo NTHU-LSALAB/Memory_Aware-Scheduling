@@ -14,7 +14,7 @@ class AlgoBase:
     def set_memory(self, memory: Memory) -> None:
         self.memory = memory
 
-    def schedule(self, tasks: list[Node], input: int, options: dict) -> tuple[list[list[Node]], int]:
+    def schedule(self, tasks: list[Node], input: int, options: dict, format) -> tuple[list[list[Node]], int]:
         pass
 
     def plot(self, schedules: list[list[Node]], makespan, filename='heft'):
@@ -24,6 +24,8 @@ class AlgoBase:
         height = len(schedules)*(per_height+gutter) + gutter
         for sid, schedule in enumerate(schedules):
             for slot in schedule:
+                if slot.aft == slot.ast:
+                    continue
                 rect = Rectangle((slot.ast, sid*(per_height+gutter) + gutter), slot.aft-slot.ast,
                                  per_height, alpha=1, ec="black", fc="#FAFEFF", lw=0.5)
                 fig.gca().add_patch(rect)
