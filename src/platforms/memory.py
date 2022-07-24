@@ -205,7 +205,7 @@ class Memory:
             cy = ry + rect.get_height()/2.0
 
             # print(slot.task.id sif slot.task else 'I', slot.pos, slot.length, slot.size)
-            plt.annotate(('B' if slot.is_buffer else 'O') + str(slot.task.mId) if hasattr(slot.task, 'mId') else str(slot.task.id), (cx, cy), color='black',
+            plt.annotate(('B' if slot.is_buffer else 'O') + (str(slot.task.mId) if hasattr(slot.task, 'mId') else str(slot.task.id)), (cx, cy), color='black',
                          fontsize=8, ha='center', va='center')
         ax.set_ylim(0, self.max() + 10)
         ax.set_xlim(0, makespan+10 if makespan else self.DEADLINE)

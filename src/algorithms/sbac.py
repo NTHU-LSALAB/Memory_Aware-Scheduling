@@ -1,90 +1,93 @@
+from functools import reduce
 from heapq import heapify, heappop, heappush
-from importlib.metadata import entry_points
-import sys
 
 import numpy as np
 from algorithms.algo_base import AlgoBase
-from algorithms.heft import calculate_priority
-from platforms.dep import Dep
-from platforms.task import MTask
+from algorithms.heft import calculate_priority, find_processor
+from lib.utils import ssse
+
 from platforms.memory import Memory
 from platforms.task import Task
 
 
-def adjust_priority(entry_task):
-    pass
+def adjust_priority(tasks: list[Task]):
+    for task in tasks:
+        if len(task.m_out_edges) > 0 and task.id != 0:  # releaser
+            releaser = task
+            release_mIds = list(
+                map(lambda edge: edge.target.mId, task.m_out_edges))
+            releaser_pairs = []
+            for p_task in tasks:
+                # pair need to be consumer
+                for edge in p_task.m_in_edges:
+                    if edge.source.mId in release_mIds:
+                        releaser_pairs.append(p_task)
+
+            vc_list = []
+            for adj_edge in releaser.t_in_edges:  # adj
+                if len(adj_edge.source.m_in_edges) > 0:  # consumer
+                    consumer = adj_edge.source
+                    consume_mIds = list(
+                        map(lambda edge: edge.source.mId, consumer.m_in_edges))
+                    consumer_pairs = []
+                    for p_task in tasks:
+                        # pair need to be releaser
+                        for edge in p_task.m_out_edges:
+                            if edge.target.mId in consume_mIds:
+                                consumer_pairs.append(p_task)
+                    if consumer.priority < np.average(list(map(lambda pair: pair.priority, releaser_pairs))):
+                        vc_list.append(consumer)
+                        continue
+                    isnot_adj = True
+                    for c_pair in consumer_pairs:
+                        for r_pair in releaser_pairs:
+                            if r_pair in list(map(lambda edge: edge.target, c_pair.t_out_edges)):
+                                isnot_adj = False
+                    if isnot_adj:
+                        vc_list.append(consumer)
+            for adj_edge in releaser.t_out_edges:  # adj
+                if len(adj_edge.target.m_in_edges) > 0:  # consumer
+                    consumer = adj_edge.source
+                    consume_mIds = list(
+                        map(lambda edge: edge.source.mId, consumer.m_in_edges))
+                    consumer_pairs = []
+                    for p_task in tasks:
+                        # pair need to be releaser
+                        for edge in p_task.m_out_edges:
+                            if edge.target.mId in consume_mIds:
+                                consumer_pairs.append(p_task)
+                    if consumer.priority < np.average(list(map(lambda pair: pair.priority, releaser_pairs))):
+                        vc_list.append(consumer)
+                        continue
+                    isnot_adj = True
+                    for c_pair in consumer_pairs:
+                        for r_pair in releaser_pairs:
+                            if r_pair in list(map(lambda edge: edge.target, c_pair.t_out_edges)):
+                                isnot_adj = False
+                    if isnot_adj:
+                        vc_list.append(consumer)
+            releaser.priority += reduce(lambda prev,
+                                        curr: prev + curr.priority, vc_list, 0)
 
 
-def abac_find_processor(task: Task, schedule):
-    min_eft_procId = np.argmin(task.cost_table)
-    is_entry = len(task.t_in_edges) == 0
-    min_eft = sys.maxsize
-    # Calculate start time
-    selected_ast = est = 0 if is_entry else max(
-        [edge.source.aft if edge.source.aft else 0 for edge in task.t_in_edges])
-    # # Choose a processor
-    for pid, cost in enumerate(task.cost_table):
-        proc_est = schedule[pid][-1].aft if len(
-            schedule[pid]) > 0 else est
-
-        # Check if current task and its parents are on the same processor
-        undones = []
-        for in_edge in task.t_in_edges:
-            # parent not scheduled yet, cannot schedule this task
-            if not in_edge.source.procId:
-                if in_edge.source.id != 0:
-                    undones.append(in_edge.source)
-                continue
-            if in_edge.source.procId-1 != pid:
-                proc_est = max(in_edge.source.aft +
-                               in_edge.weight, proc_est)
-        if undones:
-            raise Exception(undones)
-        eft = proc_est + cost
-        if eft < min_eft:
-            selected_ast = proc_est
-            min_eft = eft
-            min_eft_procId = pid
-
-    return selected_ast, min_eft, min_eft_procId
+def sbac_find_processor(task, schedule):
+    return find_processor(task, schedule)
 
 
 class SBAC(AlgoBase):
 
-    def schedule(self, tasks: list[Task], input, options: dict, format='default') -> tuple[list[list[Task]], int]:
-        # print('delay version')
+    def schedule(self, tasks: list[Task], input, options={}, format='default') -> tuple[list[list[Task]], int]:
+        # print('SBAC')
         makespan = 0
-        entry_tasks = list(filter(lambda task: task.is_entry(), tasks))
-        exit_tasks = list(filter(lambda task: task.is_exit(), tasks))
-
-        if len(entry_tasks) == 0 or len(exit_tasks) == 0:
-            raise ValueError('No entry or exit nodes')
-
-        if len(entry_tasks) > 1:
-            entry_task = Task(0, [0, 0, 0], 0, 0)
-            tasks.insert(0, entry_task)
-            for task in entry_tasks:
-                edge = Dep(entry_task, task, 0, 0)
-                entry_task.out_edges.append(edge)
-                task.in_edges.append(edge)
-        else:
-            entry_task = entry_tasks[0]
-
-        if len(exit_tasks) > 1:
-            exit_task = Task(len(tasks), [0, 0, 0], 0, 0)
-            tasks.append(exit_task)
-            for task in exit_tasks:
-                edge = Dep(task, exit_task, 0, 0)
-                task.out_edges.append(edge)
-                exit_task.in_edges.append(edge)
-        else:
-            exit_task = exit_tasks[0]
+        entry_task, _ = ssse(tasks)
 
         calculate_priority(entry_task)
+        adjust_priority(tasks)
 
         schedule: list[list[Task]] = [[]
                                       for _ in range(len(entry_task.cost_table))]
-        task_heap = entry_tasks
+
+        task_heap = [entry_task]
         heapify(task_heap)
 
         while len(task_heap):
@@ -93,49 +96,87 @@ class SBAC(AlgoBase):
             if isinstance(task, Task):
                 if task.procId is not None:
                     continue
-                # print(task.id)
-                est, eft, pid = abac_find_processor(task, schedule)
+                est, eft, pid = sbac_find_processor(task, schedule)
                 latest_start = est  # AST
 
-                # allocate memory
-                for m_edge in task.m_in_edges:
-                    if m_edge.source.type == 'allocate':
-                        ok, slot = self.memory.fit(m_edge.source.buffer, [
-                            est,  Memory.DEADLINE], m_edge.source, final=False)
-                        if not ok:
-                            raise ValueError('Fail to allocate memory')
+                if format == 'default':
+                    # allocate input tensor
+                    if task is entry_task:
+                        _, slot = self.memory.fit(
+                            input, [est, eft], task)
                         if slot:
                             latest_start = max(latest_start, slot.interval[0])
+                    # allocate output tensor
+                    ok, slot = self.memory.fit(task.output, [
+                        est, eft if task.is_exit() else Memory.DEADLINE], task, final=False)
+                    if not ok:
+                        raise ValueError('Fail to allocate memory')
+                    if slot:
+                        latest_start = max(latest_start, slot.interval[0])
+
+                    ok, slot = self.memory.fit(
+                        task.buffer_size, [latest_start, latest_start + eft - est], task)
+                    if not ok:
+                        raise ValueError('Fail to allocate memory')
+                    if slot:
+                        latest_start = max(latest_start, slot.interval[0])
+                else:
+                    # allocate memory
+                    for m_edge in task.m_in_edges:
+                        if m_edge.source.type == 'allocate':
+                            ok, slot = self.memory.fit(m_edge.source.buffer, [
+                                est,  Memory.DEADLINE], m_edge.source, final=False)
+                            if not ok:
+                                raise ValueError('Fail to allocate memory')
+                            if slot:
+                                latest_start = max(
+                                    latest_start, slot.interval[0])
 
                 ast = latest_start
                 aft = latest_start + eft - est
 
-                # append task to schedule
                 task.procId = pid + 1
                 task.ast = ast
                 task.aft = aft
                 schedule[pid].append(task)
 
-                # free tensors
-                for m_edge in task.m_out_edges:
-                    if m_edge.target.type == 'free':
-                        last_use = True
-                        until = -1
-                        for in_edge in m_edge.target.t_in_edges:
-                            if in_edge.source.procId is None:
-                                last_use = False
-                                break
-                            until = max(until, in_edge.source.aft)
-                        if last_use:
-                            until = max(until, aft)
-                            self.memory.free_tensor(m_edge.target, until)
+                if format == 'default':
+                    # free input tensors
+                    if task is not entry_task:
+                        # check if inputs can be free
+                        for in_edge in task.in_edges:
+                            last_use = True
+                            until = -1
+                            for out_edge in in_edge.source.out_edges:
+                                if out_edge.target is task:
+                                    continue
+                                if out_edge.target.procId is None:  # not allocate yet
+                                    last_use = False
+                                    break
+                                until = max(until, out_edge.target.aft)
+                            if last_use:
+                                until = max(until, aft)
+                                self.memory.free_tensor(in_edge.source, until)
+                else:
+                    # free tensors
+                    for m_edge in task.m_out_edges:
+                        if m_edge.target.type == 'free':
+                            last_use = True
+                            until = -1
+                            for in_edge in m_edge.target.t_in_edges:
+                                if in_edge.source.procId is None:
+                                    last_use = False
+                                    break
+                                until = max(until, in_edge.source.aft)
+                            if last_use:
+                                until = max(until, aft)
+                                self.memory.free_tensor(m_edge.target, until)
 
-                # update makespan
                 if task.aft > makespan:
                     makespan = task.aft
 
             # update heap
-            for out_edge in task.t_out_edges:
+            for out_edge in task.out_edges:
                 last_use = True
                 for in_edge in out_edge.target.t_in_edges:
                     if in_edge.source.procId is None:
@@ -146,6 +187,14 @@ class SBAC(AlgoBase):
         if options.get('plot', True):
             suffix = options.get('suffix', '')
             self.memory.plot(
-                makespan, filename=f'sbac{suffix}')
-            self.plot(schedule, makespan, f'sbac{suffix}')
+                makespan, filename=f'heft-sbac{suffix}')
+            self.plot(schedule, makespan, f'heft-sbac{suffix}')
         return schedule, makespan, self.memory.max()
+
+    def print_priority(self, entry_node: Task):
+        print('''UPPER RANKS
+---------------------------
+Task    Rank
+---------------------------''')
+        self.bfs(entry_node, op=lambda task: print(
+            f'{task.id}       {round(task.priority, 4)}'))

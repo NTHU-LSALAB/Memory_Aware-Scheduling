@@ -9,3 +9,5 @@ out/**/*.eps
 
 experiments/results/**
 !experiments/results/.gitkeep
+
+*.png

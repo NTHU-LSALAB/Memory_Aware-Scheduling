@@ -14,7 +14,7 @@ class HEFT(AlgoBase):
     def schedule(self, tasks: list[Task], input, options={}, format='default') -> tuple[list[list[Task]], int]:
         # print('HEFT')
         makespan = 0
-        entry_task, exit_task = ssse(tasks)
+        entry_task, _ = ssse(tasks)
 
         calculate_priority(entry_task)
 
@@ -30,26 +30,30 @@ class HEFT(AlgoBase):
             if isinstance(task, Task):
                 if task.procId is not None:
                     continue
-
                 est, eft, pid = find_processor(task, schedule)
                 latest_start = est  # AST
 
                 if format == 'default':
                     # allocate input tensor
                     if task is entry_task:
-                        self.memory.fit(
-                            input, [ast, aft], task, can_delay=False)
+                        _, slot = self.memory.fit(
+                            input, [est, eft], task, can_delay=False)
+                        if slot:
+                            latest_start = max(latest_start, slot.interval[0])
                     # allocate output tensor
-                    if task is exit_task:
-                        self.memory.fit(
-                            task.output, [ast, aft], task, can_delay=False)
-                    else:
-                        # allocate task's output tensor
-                        self.memory.fit(task.out_edges[0].size, [
-                            ast, Memory.DEADLINE], task, final=False, can_delay=False)
-                    # allocate internal buffer
-                    self.memory.fit(
-                        task.buffer_size, [ast, aft], task, can_delay=False)
+                    ok, slot = self.memory.fit(task.output, [
+                        est, eft if task.is_exit() else Memory.DEADLINE], task, final=False, can_delay=False)
+                    if not ok:
+                        raise ValueError('Fail to allocate memory')
+                    if slot:
+                        latest_start = max(latest_start, slot.interval[0])
+
+                    ok, slot = self.memory.fit(
+                        task.buffer_size, [latest_start, latest_start + eft - est], task, can_delay=False)
+                    if not ok:
+                        raise ValueError('Fail to allocate memory')
+                    if slot:
+                        latest_start = max(latest_start, slot.interval[0])
                 else:
                     # allocate memory
                     for m_edge in task.m_in_edges:
@@ -59,7 +63,8 @@ class HEFT(AlgoBase):
                             if not ok:
                                 raise ValueError('Fail to allocate memory')
                             if slot:
-                                latest_start = max(latest_start, slot.interval[0])
+                                latest_start = max(
+                                    latest_start, slot.interval[0])
 
                 ast = latest_start
                 aft = latest_start + eft - est
