@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 
-with open('samples/sample.sbac.json', 'r') as f:
+with open('samples/width/sample.7.json', 'r') as f:
     json_file = json.load(f)
     edge_list = []
     node_attrs = {}

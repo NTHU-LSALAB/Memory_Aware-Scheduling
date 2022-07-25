@@ -103,8 +103,10 @@ def ssse(tasks):
     if len(entry_tasks) == 0 or len(exit_tasks) == 0:
         raise ValueError('No entry or exit nodes')
 
+    p_num = len(next(
+        (task for task in tasks if hasattr(task, 'cost_table'))).cost_table)
     if len(entry_tasks) > 1:
-        entry_task = Task(0, [0, 0, 0], 0, 0)
+        entry_task = Task(0, [0 for _ in range(p_num)], 0, 0)
         tasks.insert(0, entry_task)
         for task in entry_tasks:
             edge = Dep(entry_task, task, 0, 0)
@@ -114,7 +116,7 @@ def ssse(tasks):
         entry_task = entry_tasks[0]
 
     if len(exit_tasks) > 1:
-        exit_task = Task(len(tasks), [0, 0, 0], 0, 0)
+        exit_task = Task(len(tasks), [0 for _ in range(p_num)], 0, 0)
         tasks.append(exit_task)
         for task in exit_tasks:
             edge = Dep(task, exit_task, 0, 0)
