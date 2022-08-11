@@ -8,34 +8,34 @@ import matplotlib.pyplot as plt
 
 
 parser = argparse.ArgumentParser()
-# parser.add_argument('--input', '-i', default='samples/sample.3.json')
-parser.add_argument('--input', '-i', default='samples/sample.sbac.json')
+parser.add_argument('--input', '-i', default='samples/size/sample.15.json')
+# parser.add_argument('--input', '-i', default='samples/sample.sbac.json')
 # parser.add_argument('--input', '-i', default='samples/processor/sample.2.json')
 args = parser.parse_args()
 
 memory_size = 200
 
 app = App()
-# app.read_input(args.input, weight=False)
-app.read_input(args.input, weight=False, format='mb')
+app.read_input(args.input, weight=False)
+# app.read_input(args.input, weight=False, format='mb')
 schedule, makespan, usage = app.schedule('heft')
 print(makespan, usage)
 # schedule, makespan, usage = app.schedule('cpop')
 # print(makespan, usage)
 # # schedule, makespan, usage = app.schedule('ippts')
 # # print(makespan, usage)
-schedule, makespan, usage = app.schedule('sbac', 70)
-print(makespan, usage)
+# schedule, makespan, usage = app.schedule('sbac', 70)
+# print(makespan, usage)
 
 # ###################### DELAY VERSION ######################
-schedule, makespan, usage = app.schedule('heft_delay', 70)
+schedule, makespan, usage = app.schedule('heft_delay', 195)
 print(makespan, usage)
 # schedule, makespan, usage = app.schedule('cpop_delay', 120)
 # print(makespan, usage)
 # ###################### LOOKUP VERSION ######################
 # schedule, makespan, usage = app.schedule('heft_lookup', 70, {"depth": 0})
 # print(makespan, usage)
-schedule, makespan, usage = app.schedule('heft_lookup', 60, {"depth": 1, 'suffix': '-1'})
+schedule, makespan, usage = app.schedule('heft_lookup', 195, {"depth": 1, 'suffix': '-1'})
 print(makespan, usage)
 # schedule, makespan, usage = app.schedule('heft_lookup', 110, {"depth": 1, 'suffix': '-1', 'snapshot': True})
 # print(makespan, usage)

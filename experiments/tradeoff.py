@@ -27,7 +27,7 @@ def run_experiment():
     fig, ax = plt.subplots()
 
     dag = DAG()
-    dag.read_input('samples/sample.1.json', weight=False)
+    dag.read_input('samples/size/sample.15.json', weight=False)
     _, makespan_origin, usage = dag.schedule(args.approach)
     memory_sizes = [usage - 5*i for i in range(40)]
 
@@ -61,8 +61,10 @@ def run_experiment():
             for i, makespan in enumerate(data):
                 if makespan > 1000:
                     continue
-                x.append((makespan - makespan_origin) / makespan_origin)
-                y.append((memorys[i] - usage) / usage)
+                # x.append((makespan - makespan_origin) / makespan_origin)
+                # y.append((memorys[i] - usage) / usage)
+                x.append(makespan)
+                y.append(memorys[i])
 
             remove_indices = []
             for i, (t, m) in enumerate(zip(x, y)):
@@ -75,7 +77,7 @@ def run_experiment():
 
         x, y = remove_bad_points(data)
 
-        ax.plot(x, y, marker, label=method, lw=1, color='#333333', dashes=(5, 3), markerfacecolor='none')
+        ax.plot(y, x, marker, label=method, lw=1, color='#333333', dashes=(5, 3), markerfacecolor='none')
 
     worker(f'{args.approach}_lookup', '--o')
     worker(f'{args.approach}_delay', '--x')
@@ -85,8 +87,8 @@ def run_experiment():
     #     worker(graph)
     # wb.save(f'{folder}/result.xlsx')
     # ax.set_title("Memory-Makespan")
-    ax.set_xlabel('Increased Makespan')
-    ax.set_ylabel('Reduced Memory')
+    ax.set_xlabel('Memory Usage')
+    ax.set_ylabel('Makespan')
     # ax.set_ylim(-1, 0)
     if 'latex' in os.environ:
         fig.savefig(f'experiments/results/{args.approach}_tradeoff.eps',

@@ -31,6 +31,7 @@ for i in range(len(methods)):
     else:
         ax.bar(X + 0.1*i, data[i], fc='white', ec=colors[i], width=0.1, hatch='x')
 ax.set_xticks(X+0.2, labels=slots)
+ax.set_ylim([0, max(data[:][0])*1.75])
 ax.set_xlabel('Number of memory slots')
 ax.set_ylabel('Makespan')
 ax.legend(methods)

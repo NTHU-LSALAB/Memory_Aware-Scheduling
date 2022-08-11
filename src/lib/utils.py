@@ -50,7 +50,8 @@ def get_parallelism_degree(schedule, makespan):
 
         busy_time += busy_count
 
-    return format(busy_time/makespan, '.2f')
+    return busy_time/makespan
+    # return format(busy_time/makespan, '.2f')
 
 
 def get_parallelism_minmax(schedule, makespan):
