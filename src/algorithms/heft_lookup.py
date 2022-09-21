@@ -10,7 +10,6 @@ from platforms.task import Task
 class HEFTLookup(AlgoBase):
 
     def schedule(self, tasks: list[Task], input, options: dict, format='default') -> tuple[list[list[Task]], int]:
-        originalTasks = deepcopy(tasks)
         self.format = format
         # print('lookup version')
         self.options = options
@@ -18,7 +17,8 @@ class HEFTLookup(AlgoBase):
         self.reserved_list = []
         self.makespan = 0
 
-        entry_task, exit_task = ssse(tasks)
+        self.task_count = len(list(filter(lambda task: isinstance(task, Task), tasks)))
+        entry_task, _ = ssse(tasks)
 
         # calculate priority
         calculate_priority(entry_task)
@@ -33,16 +33,20 @@ class HEFTLookup(AlgoBase):
         while len(self.task_heap):
             task = heappop(self.task_heap)
             self.rollback_list = []
-            if isinstance(task, Task):
+            if isinstance(task, Task) and task not in self.reserved_list:
+                # print('============', task.id, '==============')
                 success = self.reserve(task, options.get('depth', 1))
+                # print('success:', success)
+                # print(list(map(lambda task: task.id, self.reserved_list)))
                 if not success:
                     self.rollback(task)
 
             # update heap
             for out_edge in task.out_edges:
-                heappush(self.task_heap, out_edge.target)
+                if out_edge.target not in self.task_heap:
+                    heappush(self.task_heap, out_edge.target)
         if len(list(filter(lambda task: isinstance(task, Task)
-             and task.procId == None, tasks))):
+                           and task.procId == None, tasks))):
             raise ValueError('Fail to allocate memory')
         if options.get('plot', True):
             suffix = options.get('suffix', '')
@@ -110,7 +114,7 @@ class HEFTLookup(AlgoBase):
             for m_edge in task.m_in_edges:
                 if m_edge.source.type == 'allocate':
                     ok, slot = self.memory.fit(m_edge.source.buffer, [
-                        est,  Memory.DEADLINE], m_edge.source, final=False)
+                        est, eft if task.id == self.task_count else Memory.DEADLINE], m_edge.source, final=False)
                     if slot:
                         latest_start = max(
                             latest_start, slot.interval[0])
@@ -132,9 +136,15 @@ class HEFTLookup(AlgoBase):
                 if not task.is_entry():
                     # check if inputs can be free
                     for in_edge in task.t_in_edges:
+                        # if task.id == 15:
+                        #     print('parent:', in_edge.source.id)
                         last_use = True
                         until = -1
+                        # if task.id == 15:
+                        #     print('siblings:')
                         for out_edge in in_edge.source.t_out_edges:
+                            # if task.id == 15:
+                            #     print(out_edge.target.id)
                             if out_edge.target is task:
                                 continue
                             if out_edge.target.procId is None:  # not allocate yet
@@ -170,18 +180,22 @@ class HEFTLookup(AlgoBase):
             return True
 
         # print('Rollback:', list(map(lambda task: task.id, self.rollback_list)))
-        for task in self.rollback_list:
+        for t in self.rollback_list:
             # reset task value
-            task.rollback()
+            t.rollback()
             # remove from reserve list
-            if task in self.reserved_list:
-                self.reserved_list.remove(task)
-            # remove memory allocation
-            self.memory.rollback(task.id)
+            if t in self.reserved_list:
+                self.reserved_list.remove(t)
+            if self.format == 'default':
+                # remove memory allocation
+                self.memory.rollback(t.id)
+            else:
+                for m_edge in t.m_in_edges:
+                    self.memory.rollback(m_edge.source.id)
             # remove from memory
             for proc_schedule in self.schedule:
-                for t in proc_schedule:
-                    if t.id == task.id:
+                for slot in proc_schedule:
+                    if t.id == slot.id:
                         proc_schedule.remove(t)
             # remove successors from ready q
             # for out_edge in task.out_edges:

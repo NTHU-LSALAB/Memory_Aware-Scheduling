@@ -17,6 +17,7 @@ from platforms.task import Task
 from algorithms.heft import HEFT
 from platforms.memory import Memory
 import copy
+sys.setrecursionlimit(10000)
 
 
 class DAG:
@@ -37,32 +38,36 @@ class DAG:
             }[algo.lower()]
         return algo
 
-    def read_input(self, filepath: str, weight=True, format='default'):
+    def read_input(self, dag: str, weight=True, format='default'):
+        if isinstance(dag, str):
+            dag = json.load(open(dag, 'r'))
+       
         self.format = format
         self.tasks: list[Task] = []
-        with open(filepath, 'r') as f:
-            json_file = json.load(f)
-            self.input = json_file.get("input", 0)
-            for json_node in json_file["nodes"]:
-                node = Task(
-                    json_node["id"], json_node.get("costs", None), json_node.get("output"), json_node.get("buffer", 10))
-                self.tasks.append(node)
+        self.edges: list[Dep] = []
+        self.input = dag.get("input", 0)
+        for json_node in dag["nodes"]:
+            node = Task(
+                json_node["id"], json_node.get("costs", None), json_node.get("output"), json_node.get("buffer", 10))
+            self.tasks.append(node)
 
-            for task in json_file.get('mTasks', []):
-                task = MTask(task['id'], task['mId'],
-                             task['type'], task.get('buffer', 10))
-                self.tasks.append(task)
+        for task in dag.get('mTasks', []):
+            task = MTask(task['id'], task['mId'],
+                            task['type'], task.get('buffer', 10), task.get('io_type'))
+            self.tasks.append(task)
 
-            def task_compare(task1: Task, task2: Task):
-                return task1.id - task2.id
-            self.tasks = sorted(self.tasks, key=cmp_to_key(task_compare))
-            for json_edge in json_file["edges"]:
-                source = self.tasks[json_edge["source"] - 1]
-                target = self.tasks[json_edge["target"] - 1]
-                new_edge = Dep(source, target, source.output if hasattr(source, 'output') else 0,
-                               json_edge.get("weight", 0) if weight else 0)
-                source.out_edges.append(new_edge)
-                target.in_edges.append(new_edge)
+        def task_compare(task1: Task, task2: Task):
+            return task1.id - task2.id
+        self.tasks = sorted(self.tasks, key=cmp_to_key(task_compare))
+        for json_edge in dag["edges"]:
+            source = self.tasks[json_edge["source"] - 1]
+            target = self.tasks[json_edge["target"] - 1]
+            new_edge = Dep(source, target, source.output if hasattr(source, 'output') else 0,
+                            json_edge.get("weight", 0) if weight else 0)
+            source.out_edges.append(new_edge)
+            target.in_edges.append(new_edge)
+            self.edges.append(new_edge)
+            
 
     def schedule(self, algo, memory=None, algo_options: dict = {}) -> tuple[list[list[Task]], int]:
         self.algo = self.get_algo(algo)

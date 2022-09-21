@@ -1,24 +1,17 @@
 import sys
 sys.path.insert(0, 'src')
-import os
-import matplotlib
-import matplotlib.pyplot as plt
-from graph.dag import DAG
-import numpy as np
-import random
 import argparse
+import random
+import numpy as np
+from graph.dag import DAG
+import matplotlib.pyplot as plt
+import matplotlib
+import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--approach', '-a', default='heft')
+parser.add_argument('--input', '-i', default='rand_workflow.json')
 args = parser.parse_args()
-
-# matplotlib.use('pdf')
-# matplotlib.rcParams.update({
-#     "pgf.texsystem": "pdflatex",
-#     'font.family': 'serif',
-#     'text.usetex': True,
-#     'pgf.rcfonts': False,
-# })
 
 depths = [0, 1, 2]
 
@@ -27,16 +20,20 @@ def run_experiment():
     fig, ax = plt.subplots()
 
     dag = DAG()
-    dag.read_input('samples/size/sample.15.json', weight=False)
+    # dag.read_input('samples/size/sample.15.json', weight=False)
+    dag.read_input(args.input, weight=False)
+    # dag.read_input('samples/mb/sample.2.json', weight=False, format='mb')
     _, makespan_origin, usage = dag.schedule(args.approach)
-    memory_sizes = [usage - 5*i for i in range(40)]
+    memory_sizes = [usage - 10*i for i in range(100)]
+    print(usage)
 
-    def worker(method, marker):
+    def worker(method, marker, label):
         data = []
         memorys = []
         for depth in depths:
             depth_row = [depth]
             for memory_size in memory_sizes:
+                # print(memory_size)
                 if memory_size <= 0:
                     memorys.append(memory_size)
                     depth_row.append('N/A')
@@ -44,25 +41,25 @@ def run_experiment():
                 try:
                     _, makespan, memory = dag.schedule(
                         method, memory_size, {"depth": depth, "plot": False})
+                    # print(makespan, memory)
                     depth_row.append(makespan)
                     memorys.append(memory)
+                    # print(memory)
                 except Exception:
                     memorys.append(memory_size)
+                    # print('N/A')
                     depth_row.append('N/A')
             data.append(depth_row[1:])
         data = np.array(data)
         data = data.T.tolist()
         data = list(map(lambda mems:
                         min(list(map(lambda mem: sys.maxsize if mem == 'N/A' else int(mem), mems))), data))
-
         def remove_bad_points(data):
             x = []
             y = []
             for i, makespan in enumerate(data):
-                if makespan > 1000:
+                if makespan > sys.maxsize/2:
                     continue
-                # x.append((makespan - makespan_origin) / makespan_origin)
-                # y.append((memorys[i] - usage) / usage)
                 x.append(makespan)
                 y.append(memorys[i])
 
@@ -76,19 +73,20 @@ def run_experiment():
             return x, y
 
         x, y = remove_bad_points(data)
+        ax.plot(y, x, marker, label=label, lw=1, color='#333333',
+                dashes=(5, 3), markerfacecolor='none')
 
-        ax.plot(y, x, marker, label=method, lw=1, color='#333333', dashes=(5, 3), markerfacecolor='none')
-
-    worker(f'{args.approach}_lookup', '--o')
-    worker(f'{args.approach}_delay', '--x')
+    worker(f'{args.approach}_lookup', '--o', 'reservation-based')
+    worker(f'{args.approach}_delay', '--x', 'delaying')
+    # worker(f'sbac', '--^', 'sbac')
     ax.legend(loc="upper right")
 
     # for graph in range(num_of_graph):
     #     worker(graph)
     # wb.save(f'{folder}/result.xlsx')
     # ax.set_title("Memory-Makespan")
-    ax.set_xlabel('Memory Usage')
-    ax.set_ylabel('Makespan')
+    ax.set_xlabel('Memory Usage', fontsize=20)
+    ax.set_ylabel('Makespan', fontsize=20)
     # ax.set_ylim(-1, 0)
     if 'latex' in os.environ:
         fig.savefig(f'experiments/results/{args.approach}_tradeoff.eps',

@@ -1,0 +1,925 @@
+{
+    "nodes": [
+        {
+            "id": 1,
+            "costs": [
+                14,
+                16,
+                19
+            ],
+            "buffer": 10,
+            "output": 20
+        },
+        {
+            "id": 2,
+            "costs": [
+                13,
+                19,
+                18
+            ],
+            "buffer": 10,
+            "output": 15
+        },
+        {
+            "id": 3,
+            "costs": [
+                11,
+                13,
+                19
+            ],
+            "buffer": 10,
+            "output": 40
+        },
+        {
+            "id": 4,
+            "costs": [
+                13,
+                8,
+                17
+            ],
+            "buffer": 10,
+            "output": 15
+        },
+        {
+            "id": 5,
+            "costs": [
+                12,
+                13,
+                10
+            ],
+            "buffer": 10,
+            "output": 14
+        },
+        {
+            "id": 6,
+            "costs": [
+                13,
+                16,
+                9
+            ],
+            "buffer": 10,
+            "output": 15
+        },
+        {
+            "id": 7,
+            "costs": [
+                7,
+                15,
+                11
+            ],
+            "buffer": 10,
+            "output": 10
+        },
+        {
+            "id": 8,
+            "costs": [
+                5,
+                11,
+                14
+            ],
+            "buffer": 10,
+            "output": 22
+        },
+        {
+            "id": 9,
+            "costs": [
+                18,
+                12,
+                20
+            ],
+            "buffer": 10,
+            "output": 17
+        },
+        {
+            "id": 10,
+            "costs": [
+                21,
+                7,
+                16
+            ],
+            "buffer": 10,
+            "output": 15
+        },
+        {
+            "id": 11,
+            "costs": [
+                14,
+                16,
+                19
+            ],
+            "buffer": 10,
+            "output": 20
+        },
+        {
+            "id": 12,
+            "costs": [
+                13,
+                19,
+                18
+            ],
+            "buffer": 10,
+            "output": 15
+        },
+        {
+            "id": 13,
+            "costs": [
+                11,
+                13,
+                19
+            ],
+            "buffer": 10,
+            "output": 40
+        },
+        {
+            "id": 14,
+            "costs": [
+                13,
+                8,
+                17
+            ],
+            "buffer": 10,
+            "output": 10
+        },
+        {
+            "id": 15,
+            "costs": [
+                12,
+                13,
+                10
+            ],
+            "buffer": 10,
+            "output": 10
+        }
+    ],
+    "edges": [
+        {
+            "source": 1,
+            "target": 2
+        },
+        {
+            "source": 1,
+            "target": 3
+        },
+        {
+            "source": 1,
+            "target": 4
+        },
+        {
+            "source": 1,
+            "target": 5
+        },
+        {
+            "source": 1,
+            "target": 6
+        },
+        {
+            "source": 2,
+            "target": 7
+        },
+        {
+            "source": 2,
+            "target": 8
+        },
+        {
+            "source": 3,
+            "target": 7
+        },
+        {
+            "source": 3,
+            "target": 9
+        },
+        {
+            "source": 4,
+            "target": 8
+        },
+        {
+            "source": 4,
+            "target": 10
+        },
+        {
+            "source": 5,
+            "target": 10
+        },
+        {
+            "source": 6,
+            "target": 11
+        },
+        {
+            "source": 7,
+            "target": 12
+        },
+        {
+            "source": 8,
+            "target": 12
+        },
+        {
+            "source": 9,
+            "target": 13
+        },
+        {
+            "source": 10,
+            "target": 13
+        },
+        {
+            "source": 10,
+            "target": 14
+        },
+        {
+            "source": 11,
+            "target": 14
+        },
+        {
+            "source": 12,
+            "target": 15
+        },
+        {
+            "source": 13,
+            "target": 15
+        },
+        {
+            "source": 14,
+            "target": 15
+        },
+        {
+            "source": 16,
+            "target": 1
+        },
+        {
+            "source": 1,
+            "target": 17
+        },
+        {
+            "source": 18,
+            "target": 1
+        },
+        {
+            "source": 1,
+            "target": 19
+        },
+        {
+            "source": 20,
+            "target": 1
+        },
+        {
+            "source": 2,
+            "target": 21
+        },
+        {
+            "source": 3,
+            "target": 21
+        },
+        {
+            "source": 4,
+            "target": 21
+        },
+        {
+            "source": 5,
+            "target": 21
+        },
+        {
+            "source": 6,
+            "target": 21
+        },
+        {
+            "source": 22,
+            "target": 2
+        },
+        {
+            "source": 2,
+            "target": 23
+        },
+        {
+            "source": 24,
+            "target": 2
+        },
+        {
+            "source": 7,
+            "target": 25
+        },
+        {
+            "source": 8,
+            "target": 25
+        },
+        {
+            "source": 26,
+            "target": 3
+        },
+        {
+            "source": 3,
+            "target": 27
+        },
+        {
+            "source": 28,
+            "target": 3
+        },
+        {
+            "source": 7,
+            "target": 29
+        },
+        {
+            "source": 9,
+            "target": 29
+        },
+        {
+            "source": 30,
+            "target": 4
+        },
+        {
+            "source": 4,
+            "target": 31
+        },
+        {
+            "source": 32,
+            "target": 4
+        },
+        {
+            "source": 8,
+            "target": 33
+        },
+        {
+            "source": 10,
+            "target": 33
+        },
+        {
+            "source": 34,
+            "target": 5
+        },
+        {
+            "source": 5,
+            "target": 35
+        },
+        {
+            "source": 36,
+            "target": 5
+        },
+        {
+            "source": 10,
+            "target": 37
+        },
+        {
+            "source": 38,
+            "target": 6
+        },
+        {
+            "source": 6,
+            "target": 39
+        },
+        {
+            "source": 40,
+            "target": 6
+        },
+        {
+            "source": 11,
+            "target": 41
+        },
+        {
+            "source": 42,
+            "target": 7
+        },
+        {
+            "source": 7,
+            "target": 43
+        },
+        {
+            "source": 44,
+            "target": 7
+        },
+        {
+            "source": 12,
+            "target": 45
+        },
+        {
+            "source": 46,
+            "target": 8
+        },
+        {
+            "source": 8,
+            "target": 47
+        },
+        {
+            "source": 48,
+            "target": 8
+        },
+        {
+            "source": 12,
+            "target": 49
+        },
+        {
+            "source": 50,
+            "target": 9
+        },
+        {
+            "source": 9,
+            "target": 51
+        },
+        {
+            "source": 52,
+            "target": 9
+        },
+        {
+            "source": 13,
+            "target": 53
+        },
+        {
+            "source": 54,
+            "target": 10
+        },
+        {
+            "source": 10,
+            "target": 55
+        },
+        {
+            "source": 56,
+            "target": 10
+        },
+        {
+            "source": 13,
+            "target": 57
+        },
+        {
+            "source": 14,
+            "target": 57
+        },
+        {
+            "source": 58,
+            "target": 11
+        },
+        {
+            "source": 11,
+            "target": 59
+        },
+        {
+            "source": 60,
+            "target": 11
+        },
+        {
+            "source": 14,
+            "target": 61
+        },
+        {
+            "source": 62,
+            "target": 12
+        },
+        {
+            "source": 12,
+            "target": 63
+        },
+        {
+            "source": 64,
+            "target": 12
+        },
+        {
+            "source": 15,
+            "target": 65
+        },
+        {
+            "source": 66,
+            "target": 13
+        },
+        {
+            "source": 13,
+            "target": 67
+        },
+        {
+            "source": 68,
+            "target": 13
+        },
+        {
+            "source": 15,
+            "target": 69
+        },
+        {
+            "source": 70,
+            "target": 14
+        },
+        {
+            "source": 14,
+            "target": 71
+        },
+        {
+            "source": 72,
+            "target": 14
+        },
+        {
+            "source": 15,
+            "target": 73
+        },
+        {
+            "source": 74,
+            "target": 15
+        },
+        {
+            "source": 15,
+            "target": 75
+        },
+        {
+            "source": 76,
+            "target": 15
+        }
+    ],
+    "mTasks": [
+        {
+            "id": 16,
+            "mId": 1,
+            "buffer": 50,
+            "type": "allocate",
+            "io_type": "input"
+        },
+        {
+            "id": 17,
+            "mId": 1,
+            "type": "free",
+            "io_type": "input"
+        },
+        {
+            "id": 18,
+            "mId": 1,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "buffer"
+        },
+        {
+            "id": 19,
+            "mId": 1,
+            "type": "free",
+            "io_type": "buffer"
+        },
+        {
+            "id": 20,
+            "mId": 1,
+            "buffer": 20,
+            "type": "allocate",
+            "io_type": "output"
+        },
+        {
+            "id": 21,
+            "mId": 1,
+            "type": "free",
+            "io_type": "output"
+        },
+        {
+            "id": 22,
+            "mId": 2,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "buffer"
+        },
+        {
+            "id": 23,
+            "mId": 2,
+            "type": "free",
+            "io_type": "buffer"
+        },
+        {
+            "id": 24,
+            "mId": 2,
+            "buffer": 15,
+            "type": "allocate",
+            "io_type": "output"
+        },
+        {
+            "id": 25,
+            "mId": 2,
+            "type": "free",
+            "io_type": "output"
+        },
+        {
+            "id": 26,
+            "mId": 3,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "buffer"
+        },
+        {
+            "id": 27,
+            "mId": 3,
+            "type": "free",
+            "io_type": "buffer"
+        },
+        {
+            "id": 28,
+            "mId": 3,
+            "buffer": 40,
+            "type": "allocate",
+            "io_type": "output"
+        },
+        {
+            "id": 29,
+            "mId": 3,
+            "type": "free",
+            "io_type": "output"
+        },
+        {
+            "id": 30,
+            "mId": 4,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "buffer"
+        },
+        {
+            "id": 31,
+            "mId": 4,
+            "type": "free",
+            "io_type": "buffer"
+        },
+        {
+            "id": 32,
+            "mId": 4,
+            "buffer": 15,
+            "type": "allocate",
+            "io_type": "output"
+        },
+        {
+            "id": 33,
+            "mId": 4,
+            "type": "free",
+            "io_type": "output"
+        },
+        {
+            "id": 34,
+            "mId": 5,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "buffer"
+        },
+        {
+            "id": 35,
+            "mId": 5,
+            "type": "free",
+            "io_type": "buffer"
+        },
+        {
+            "id": 36,
+            "mId": 5,
+            "buffer": 14,
+            "type": "allocate",
+            "io_type": "output"
+        },
+        {
+            "id": 37,
+            "mId": 5,
+            "type": "free",
+            "io_type": "output"
+        },
+        {
+            "id": 38,
+            "mId": 6,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "buffer"
+        },
+        {
+            "id": 39,
+            "mId": 6,
+            "type": "free",
+            "io_type": "buffer"
+        },
+        {
+            "id": 40,
+            "mId": 6,
+            "buffer": 15,
+            "type": "allocate",
+            "io_type": "output"
+        },
+        {
+            "id": 41,
+            "mId": 6,
+            "type": "free",
+            "io_type": "output"
+        },
+        {
+            "id": 42,
+            "mId": 7,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "buffer"
+        },
+        {
+            "id": 43,
+            "mId": 7,
+            "type": "free",
+            "io_type": "buffer"
+        },
+        {
+            "id": 44,
+            "mId": 7,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "output"
+        },
+        {
+            "id": 45,
+            "mId": 7,
+            "type": "free",
+            "io_type": "output"
+        },
+        {
+            "id": 46,
+            "mId": 8,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "buffer"
+        },
+        {
+            "id": 47,
+            "mId": 8,
+            "type": "free",
+            "io_type": "buffer"
+        },
+        {
+            "id": 48,
+            "mId": 8,
+            "buffer": 22,
+            "type": "allocate",
+            "io_type": "output"
+        },
+        {
+            "id": 49,
+            "mId": 8,
+            "type": "free",
+            "io_type": "output"
+        },
+        {
+            "id": 50,
+            "mId": 9,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "buffer"
+        },
+        {
+            "id": 51,
+            "mId": 9,
+            "type": "free",
+            "io_type": "buffer"
+        },
+        {
+            "id": 52,
+            "mId": 9,
+            "buffer": 17,
+            "type": "allocate",
+            "io_type": "output"
+        },
+        {
+            "id": 53,
+            "mId": 9,
+            "type": "free",
+            "io_type": "output"
+        },
+        {
+            "id": 54,
+            "mId": 10,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "buffer"
+        },
+        {
+            "id": 55,
+            "mId": 10,
+            "type": "free",
+            "io_type": "buffer"
+        },
+        {
+            "id": 56,
+            "mId": 10,
+            "buffer": 15,
+            "type": "allocate",
+            "io_type": "output"
+        },
+        {
+            "id": 57,
+            "mId": 10,
+            "type": "free",
+            "io_type": "output"
+        },
+        {
+            "id": 58,
+            "mId": 11,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "buffer"
+        },
+        {
+            "id": 59,
+            "mId": 11,
+            "type": "free",
+            "io_type": "buffer"
+        },
+        {
+            "id": 60,
+            "mId": 11,
+            "buffer": 20,
+            "type": "allocate",
+            "io_type": "output"
+        },
+        {
+            "id": 61,
+            "mId": 11,
+            "type": "free",
+            "io_type": "output"
+        },
+        {
+            "id": 62,
+            "mId": 12,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "buffer"
+        },
+        {
+            "id": 63,
+            "mId": 12,
+            "type": "free",
+            "io_type": "buffer"
+        },
+        {
+            "id": 64,
+            "mId": 12,
+            "buffer": 15,
+            "type": "allocate",
+            "io_type": "output"
+        },
+        {
+            "id": 65,
+            "mId": 12,
+            "type": "free",
+            "io_type": "output"
+        },
+        {
+            "id": 66,
+            "mId": 13,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "buffer"
+        },
+        {
+            "id": 67,
+            "mId": 13,
+            "type": "free",
+            "io_type": "buffer"
+        },
+        {
+            "id": 68,
+            "mId": 13,
+            "buffer": 40,
+            "type": "allocate",
+            "io_type": "output"
+        },
+        {
+            "id": 69,
+            "mId": 13,
+            "type": "free",
+            "io_type": "output"
+        },
+        {
+            "id": 70,
+            "mId": 14,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "buffer"
+        },
+        {
+            "id": 71,
+            "mId": 14,
+            "type": "free",
+            "io_type": "buffer"
+        },
+        {
+            "id": 72,
+            "mId": 14,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "output"
+        },
+        {
+            "id": 73,
+            "mId": 14,
+            "type": "free",
+            "io_type": "output"
+        },
+        {
+            "id": 74,
+            "mId": 15,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "buffer"
+        },
+        {
+            "id": 75,
+            "mId": 15,
+            "type": "free",
+            "io_type": "buffer"
+        },
+        {
+            "id": 76,
+            "mId": 15,
+            "buffer": 10,
+            "type": "allocate",
+            "io_type": "output"
+        },
+        {
+            "id": 77,
+            "mId": 15,
+            "type": "free",
+            "io_type": "output"
+        }
+    ]
+}

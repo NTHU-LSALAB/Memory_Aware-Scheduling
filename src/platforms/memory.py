@@ -166,9 +166,10 @@ class Memory:
                           tid, self.slots))
 
     def free_tensor(self, task, until):
+        # print(list(map(lambda slot: (slot.task.io_type, slot.final, slot.task.mId), self.slots)), (task.mId, task.io_type))
         if hasattr(task, 'mId'):
             target_slots = list(
-                filter(lambda slot: slot.task.mId is task.mId and slot.final is False, self.slots))
+                filter(lambda slot: slot.task.mId is task.mId and slot.final is False and slot.task.io_type == task.io_type, self.slots))
         else:
             target_slots = list(
                 filter(lambda slot: slot.task is task and slot.final is False, self.slots))
@@ -209,8 +210,8 @@ class Memory:
                          fontsize=8, ha='center', va='center')
         ax.set_ylim(0, self.max() + 10)
         ax.set_xlim(0, makespan+10 if makespan else self.DEADLINE)
-        ax.set_xlabel('Time')
-        ax.set_ylabel('Address')
+        ax.set_xlabel('Time', fontsize=20)
+        ax.set_ylabel('Address', fontsize=20)
         if self.size is not sys.maxsize:
             ax.axhline(y=self.size, color='red', linestyle='dashed')
             y_ticks = np.append(ax.get_yticks(), self.size)

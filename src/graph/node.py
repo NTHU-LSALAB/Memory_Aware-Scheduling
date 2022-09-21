@@ -23,7 +23,11 @@ class Node:
         return len(self.out_edges) == 0
 
     def __lt__(self, other):
-        return self.priority > other.priority
+        # return self.priority > other.priority
+        if self.priority == other.priority:
+            return self.id > other.id
+        else:
+            return self.priority > other.priority
 
     def __eq__(self, other):
         return self.id == other.id

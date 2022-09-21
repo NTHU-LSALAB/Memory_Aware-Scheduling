@@ -7,7 +7,7 @@ pip install matplotlib numpy
 python main.py
 ```
 
-## Experiment
+## Experiments
 
 ```
 python experiments/min_memory.py

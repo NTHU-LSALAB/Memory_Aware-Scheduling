@@ -144,7 +144,7 @@ def build_graph(edges):
 
 
 def random_cpu(t):
-    if random.random() < args.prob:
+    if random.random() < args.prob if hasattr(args, 'prob') else 1:
         return random.sample(range(1, 3 * t), 1)[0]
     else:
         return random.sample(range(5 * t, 10 * t), 1)[0]
@@ -157,11 +157,11 @@ def random_mem(r, is_buffer=False):
         return round(random.uniform(0.05 * r, 0.5 * r))
 
 
-def workflows_generator(mode='default', n=10, max_out=2, alpha=1, beta=1.0, processor=3, processors=[3], t_unit=10, resource_unit=100):
+def workflows_generator(mode='rand', task_num=10, max_out=2, alpha=1, beta=1.0, processor=3, processors=[3], t_unit=10, resource_unit=100):
     t = t_unit  # s   time unit
     r = resource_unit  # resource unit
     edges, pos = DAGs_generate(
-        mode, n, max_out, alpha, beta, processor)
+        mode, task_num, max_out, alpha, beta, processor)
 
     dag = build_graph(edges)
 
@@ -173,23 +173,6 @@ def workflows_generator(mode='default', n=10, max_out=2, alpha=1, beta=1.0, proc
         else:
             obj[key] = obj[key] + 1
 
-    # dags = []
-    # for processor in processors:
-    #     tmp = deepcopy(dag)
-    #     for node in tmp['nodes']:
-    #         transform(node, 'id')
-    #         node['costs'] = [random_cpu(t) for _ in range(processor)]
-    #         node['output'] = random_mem(r)
-    #         node['buffer'] = random_mem(r, True)
-
-    #     for link in tmp['links']:
-    #         transform(link, 'source')
-    #         transform(link, 'target')
-
-    #     tmp['input'] = random_mem(r)
-    #     tmp['edges'] = tmp['links']
-    #     del tmp['links']
-    #     dags.append(tmp)
     for node in dag['nodes']:
         transform(node, 'id')
         node['costs'] = [random_cpu(t) for _ in range(processor)]

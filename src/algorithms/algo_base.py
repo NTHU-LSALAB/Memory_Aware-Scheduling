@@ -41,17 +41,20 @@ class AlgoBase:
         ax.set_yticks(X, labels=labels)
         ax.set_xlim(0, makespan+10)
         ax.set_ylim(0, height)
-        ax.set_xlabel('Time')
-        ax.set_ylabel('Processor')
+        ax.set_xlabel('Time', fontsize=20)
+        ax.set_ylabel('Processor', fontsize=20)
 
         ax.plot((makespan, makespan), (0, height), linestyle='dashed')
         x_ticks = np.append(ax.get_xticks(), makespan)
         ax.set_xticks(x_ticks)
-        print(filename)
 
         if not os.path.exists('out/schedule'):
             os.mkdir('out/schedule')
-        fig.savefig(f'out/schedule/{filename}.png')
+        if 'latex' in os.environ:
+            fig.savefig(f'out/schedule/{filename}.eps', format="eps",
+                        dpi=1200, bbox_inches="tight", transparent=True)
+        else:
+            fig.savefig(f'out/schedule/{filename}.png')
         plt.close()
 
     def bfs(self, entry_task: Node, op=None):

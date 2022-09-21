@@ -14,6 +14,8 @@ class HEFT(AlgoBase):
     def schedule(self, tasks: list[Task], input, options={}, format='default') -> tuple[list[list[Task]], int]:
         # print('HEFT')
         makespan = 0
+        task_count = len(
+            list(filter(lambda task: isinstance(task, Task), tasks)))
         entry_task, _ = ssse(tasks)
 
         calculate_priority(entry_task)
@@ -36,35 +38,22 @@ class HEFT(AlgoBase):
                 if format == 'default':
                     # allocate input tensor
                     if task is entry_task:
-                        _, slot = self.memory.fit(
+                        self.memory.fit(
                             input, [est, eft], task, can_delay=False)
-                        if slot:
-                            latest_start = max(latest_start, slot.interval[0])
                     # allocate output tensor
-                    ok, slot = self.memory.fit(task.output, [
+                    self.memory.fit(task.output, [
                         est, eft if task.is_exit() else Memory.DEADLINE], task, final=False, can_delay=False)
-                    if not ok:
-                        raise ValueError('Fail to allocate memory')
-                    if slot:
-                        latest_start = max(latest_start, slot.interval[0])
 
-                    ok, slot = self.memory.fit(
+                    self.memory.fit(
                         task.buffer_size, [latest_start, latest_start + eft - est], task, can_delay=False)
-                    if not ok:
-                        raise ValueError('Fail to allocate memory')
-                    if slot:
-                        latest_start = max(latest_start, slot.interval[0])
                 else:
                     # allocate memory
                     for m_edge in task.m_in_edges:
                         if m_edge.source.type == 'allocate':
-                            ok, slot = self.memory.fit(m_edge.source.buffer, [
-                                est,  Memory.DEADLINE], m_edge.source, final=False, can_delay=False)
+                            ok, _ = self.memory.fit(m_edge.source.buffer, [
+                                est, eft if task.id == task_count else Memory.DEADLINE], m_edge.source, final=False)
                             if not ok:
                                 raise ValueError('Fail to allocate memory')
-                            if slot:
-                                latest_start = max(
-                                    latest_start, slot.interval[0])
 
                 ast = latest_start
                 aft = latest_start + eft - est
@@ -135,7 +124,11 @@ Task    Rank
 
 
 def task_compare(task1: Task, task2: Task):
-    return task2.priority - task1.priority
+    # return task2.priority - task1.priority
+    if task2.priority == task1.priority:
+        return task2.id - task1.id
+    else:
+        return task2.priority - task1.priority
 
 
 def calculate_priority(task: Union[Task, MTask]):
@@ -183,33 +176,3 @@ def find_processor(task: Task, schedule):
             min_eft_procId = pid
 
     return selected_ast, min_eft, min_eft_procId
-    # min_eft_procId = np.argmin(task.cost_table)
-    # min_eft = task.cost_table[min_eft_procId] if task.is_entry(
-    # ) else sys.maxsize
-    # # Calculate start time
-    # selected_ast = est = 0 if task.is_entry() else max(
-    #     [edge.source.aft if edge.source.aft else 0 for edge in task.in_edges])
-    # # Choose a processor
-    # for pid, cost in enumerate(task.cost_table):
-    #     proc_est = schedule[pid][-1].aft if len(
-    #         schedule[pid]) > 0 else est
-
-    #     # Check if current task and its parents are on the same processor
-    #     undones = []
-    #     for in_edge in task.in_edges:
-    #         # parent not scheduled yet, cannot schedule this task
-    #         if not in_edge.source.procId:
-    #             undones.append(in_edge.source)
-    #             continue
-    #         if in_edge.source.procId-1 != pid:
-    #             proc_est = max(in_edge.source.aft +
-    #                            in_edge.weight, proc_est)
-    #     if undones:
-    #         raise Exception(undones)
-    #     eft = proc_est + cost
-    #     if eft < min_eft:
-    #         selected_ast = proc_est
-    #         min_eft = eft
-    #         min_eft_procId = pid
-
-    # return selected_ast, min_eft, min_eft_procId

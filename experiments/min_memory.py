@@ -97,11 +97,10 @@ autolabel(rects)
 autolabel(rects2)
 ax.set_ylim([0, max(data[:][2])*1.75])
 ax.set_xticks(X + 0.26, labels=exp_list)
-ax.legend(labels=[f'{args.approach.upper()} Reservation',
-          f'{args.approach.upper()} Delay', f'{args.approach.upper()} Original'])
+ax.legend(labels=['reservation-based', 'delaying', 'original'])
 # ax.set_title("Minimal memory usage")
-ax.set_xlabel(f'# {name}')
-ax.set_ylabel('Usage')
+ax.set_xlabel(f'# {name.capitalize()}', fontsize=20)
+ax.set_ylabel('Memory Usage', fontsize=20)
 for spine in ax.spines.values():
     spine.set_edgecolor('grey')
 if 'latex' in os.environ:
@@ -115,9 +114,9 @@ else:
 fig_exec, ax_exec = plt.subplots()
 ax_exec.grid(axis='y')
 ax_exec.set_axisbelow(True)
-rects = ax_exec.bar(X + 0.00, data_exec[0], fc='white', ec='#edb16d', hatch='x', alpha=0.9, width=0.25)
-rects2 = ax_exec.bar(X + 0.28, data_exec[1], fc='white', ec='#3c6f4f', hatch='x', alpha=0.9, width=0.25)
-ax_exec.bar(X + 0.524, data_exec[2], fc='white', ec='#1f57a4', hatch='x', alpha=0.9, width=0.25)
+rects = ax_exec.bar(X + 0.00, data_exec[0], fc='white', ec='#edb16d', hatch='xx', width=0.25)
+rects2 = ax_exec.bar(X + 0.28, data_exec[1], fc='white', ec='#3c6f4f', hatch='xx', width=0.25)
+ax_exec.bar(X + 0.524, data_exec[2], fc='white', ec='#1f57a4', hatch='xx', width=0.25)
 
 
 def autolabel_exec(rects):
@@ -131,11 +130,10 @@ autolabel_exec(rects)
 autolabel_exec(rects2)
 ax_exec.set_ylim([0, max(data[:][0])*1.75])
 ax_exec.set_xticks(X + 0.28, labels=exp_list)
-ax_exec.legend(labels=[f'{args.approach.upper()} Reservation',
-               f'{args.approach.upper()} Delay', f'{args.approach.upper()} Original'])
+ax_exec.legend(labels=['reservation-based', 'delaying', 'original'])
 # ax_exec.set_title("Increased makespan")
-ax_exec.set_xlabel(f'# {name}')
-ax_exec.set_ylabel('Makespan')
+ax_exec.set_xlabel(f'# {name.capitalize()}', fontsize=20)
+ax_exec.set_ylabel('Makespan', fontsize=20)
 for spine in ax_exec.spines.values():
     spine.set_edgecolor('grey')
 if 'latex' in os.environ:

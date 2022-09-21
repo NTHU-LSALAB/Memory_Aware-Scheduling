@@ -12,6 +12,8 @@ class HEFTDelay(AlgoBase):
     def schedule(self, tasks: list[Task], input, options={}, format='default') -> tuple[list[list[Task]], int]:
         # print('HEFT')
         makespan = 0
+        task_count = len(
+            list(filter(lambda task: isinstance(task, Task), tasks)))
         entry_task, _ = ssse(tasks)
 
         calculate_priority(entry_task)
@@ -28,7 +30,7 @@ class HEFTDelay(AlgoBase):
             if isinstance(task, Task):
                 if task.procId is not None:
                     continue
-
+                # print('==============',task.id, '=============')
                 est, eft, pid = find_processor(task, schedule)
                 latest_start = est  # AST
 
@@ -58,7 +60,7 @@ class HEFTDelay(AlgoBase):
                     for m_edge in task.m_in_edges:
                         if m_edge.source.type == 'allocate':
                             ok, slot = self.memory.fit(m_edge.source.buffer, [
-                                est,  Memory.DEADLINE], m_edge.source, final=False)
+                                est, eft if task.id == task_count else Memory.DEADLINE], m_edge.source, final=False)
                             if not ok:
                                 raise ValueError('Fail to allocate memory')
                             if slot:
@@ -73,7 +75,7 @@ class HEFTDelay(AlgoBase):
                 task.aft = aft
                 schedule[pid].append(task)
 
-                if format == 'default':
+                if format == 'default' and task.id != 0:
                     # free input tensors
                     if task is not entry_task:
                         # check if inputs can be free
@@ -90,18 +92,21 @@ class HEFTDelay(AlgoBase):
                             if last_use:
                                 until = max(until, aft)
                                 self.memory.free_tensor(in_edge.source, until)
-                else:
+                elif task.id != 0:
                     # free tensors
+                    # print(f'======== {task.id} ========')
                     for m_edge in task.m_out_edges:
                         if m_edge.target.type == 'free':
                             last_use = True
                             until = -1
+                            # print(m_edge.target.id)
                             for in_edge in m_edge.target.t_in_edges:
                                 if in_edge.source.procId is None:
                                     last_use = False
                                     break
                                 until = max(until, in_edge.source.aft)
                             if last_use:
+                                # print(task.id, 'free', 'mId:', m_edge.target.mId)
                                 until = max(until, aft)
                                 self.memory.free_tensor(m_edge.target, until)
 

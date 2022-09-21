@@ -59,11 +59,12 @@ class Task(Node):
         }) + '\n'
 
 class MTask(Node):
-    def __init__(self, id: int, mId: int, type: str, buffer: int):
+    def __init__(self, id: int, mId: int, type: str, buffer: int, io_type: str):
         super().__init__(id)
         self.mId = mId
         self.type = type
         self.buffer = buffer
+        self.io_type = io_type
 
     @property
     def t_out_edges(self):
