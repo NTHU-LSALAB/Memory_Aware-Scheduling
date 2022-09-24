@@ -22,6 +22,9 @@ sys.setrecursionlimit(10000)
 
 class DAG:
 
+    def __init__(self, dag = None):
+        if dag is not None:
+            self.read_input(dag)
     def get_algo(self, algo):
         if isinstance(algo, str):
             algo: AlgoBase = {
@@ -38,6 +41,7 @@ class DAG:
             }[algo.lower()]
         return algo
 
+    # dag could be file name, dict object
     def read_input(self, dag: str, weight=True, format='default'):
         if isinstance(dag, str):
             dag = json.load(open(dag, 'r'))

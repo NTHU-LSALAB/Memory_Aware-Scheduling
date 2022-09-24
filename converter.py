@@ -4,16 +4,12 @@ import json
 import matplotlib.pyplot as plt
 from graph.dag import DAG
 
-
-def main():
-    plt.figure(figsize=(3.8, 4), dpi=1000)
+def converter(dag_obj, format='default'):
     nodelist = []
     edgelist = []
-    dag = DAG()
-    dag.read_input('samples/sample.3.json')
-    # dag.read_input('samples/size/sample.15.json')
-
-    for node in dag.tasks:
+    if isinstance(dag_obj, dict):
+        dag_obj = DAG(dag_obj)
+    for node in dag_obj.tasks:
         nodelist.append({
             "id": node.id,
             "costs": node.cost_table,
@@ -21,18 +17,18 @@ def main():
             "output": node.output
         })
 
-    for edge in dag.edges:
+    for edge in dag_obj.edges:
         edgelist.append({
             "source": edge.source.id,
             "target": edge.target.id,
         })
     # create mem task
     m_tasks = []
-    pk = len(dag.tasks) + 1
+    pk = len(dag_obj.tasks) + 1
     m_tasks.append({
         "id": pk,
         "mId": 1,
-        "buffer": dag.input,
+        "buffer": dag_obj.input,
         "type": "allocate",
         "io_type": "input"
     })
@@ -52,7 +48,7 @@ def main():
         "target": pk
     })
     pk += 1
-    for node in dag.tasks:
+    for node in dag_obj.tasks:
         node_id = node.id
         buffer = node.buffer_size
         output = node.output
@@ -111,12 +107,21 @@ def main():
         })
         pk += 1
 
+    return {
+        "nodes": nodelist,
+        "edges": edgelist,
+        "mTasks": m_tasks
+    }
+
+def main():
+    plt.figure(figsize=(3.8, 4), dpi=1000)
+    dag = DAG()
+    dag.read_input('samples/sample.3.json')
+
+    dag_like = converter(dag, 'default')    
+
     with open('samples/mb/sample.3.json', 'w') as f:
-        json.dump({
-            "nodes": nodelist,
-            "edges": edgelist,
-            "mTasks": m_tasks
-        }, f, indent=4)
+        json.dump(dag_like, f, indent=4)
 
 
 if __name__ == '__main__':
