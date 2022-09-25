@@ -1,21 +1,30 @@
-import os
+import time
+import matplotlib.pyplot as plt
 import sys
 sys.path.insert(0, 'src')
-import matplotlib.pyplot as plt
-from lib.rand_workflow_generator import workflows_generator
-from lib.real_workflow_generator import dag_generator, save_dag
+sys.path.insert(0, './')
+from lib.real_workflow_generator import dag_generator, parse_dax
+from converter import converter
 from platforms.app import App
+from multiprocessing import Pool
+import os
+import numpy as np
 
-num_ranges = [50, 100, 200]
 
-def worker(method, usage):
+task_num_list = [50, 100]
+recipes = ['montage', 'cyber', 'epig', 'sight', 'inspiral']
+method_list = [('heft_dalay', 'delaying', '#3c6f4f'), ('sbac',
+                                                       'sbac', 'blue'), ('heft_lookup', 'reservation-based', '#edb16d')]
+
+
+def worker(app, method, usage):
     last_memory = mem_size = usage
     while True:
         if mem_size <= 0:
             break
 
         feasible = False
-        for depth in [0] if method == 'heft-delay' else [0, 1, 2]:
+        for depth in [0] if method != 'heft_lookup' else [0, 1, 2]:
             try:
                 _, makepsan, memory = app.schedule(
                     method, mem_size, {"depth": depth, "plot": False})
@@ -29,31 +38,43 @@ def worker(method, usage):
             return last_memory
         mem_size -= 10
 
-recipes = ['montage', 'genome', 'epig']
-xticks = []
-app = App()
-delay_data = []
-lookup_data = []
+def f(method, recipe, task_num):
+    start = time.time()
+    app = App()
+    dag_like = dag_map[recipe][task_num]
+    app.read_input(dag_like, format='mb')
+    _, _, usage = app.schedule('heft')
+
+    min_data = worker(app, method[0], usage)
+    end = time.time()
+
+    print(f'{recipe} {task_num} {method[1]}: {format("%.2f" % (end-start))}, {min_data}')
+    return min_data
+
+# multi-processing
+min_data_3d = []
+xticks_flatlist = []
+dag_map = {}
 for recipe in recipes:
-    for num_range in num_ranges:
-        print(f'============= {num_range} =============')
+    tmp = {}
+    for task_num in task_num_list:
+        xticks_flatlist.append(f'{recipe[:4]}.-{task_num}')
+        dag_like = parse_dax(recipe=recipe, task_num=task_num)
+        dag_like = converter(dag_like)
+        tmp[task_num] = dag_like
+    dag_map[recipe] = tmp
+with Pool() as p:
+    min_data_list = p.starmap(
+        f, [(method, recipe, task_num) for method in method_list for recipe in recipes for task_num in task_num_list])
 
-        dag_like, _, _ = workflows_generator(task_num=num_range)
-        save_dag(dag_like, f'-{recipe}-{num_range}')
-        app.read_input(dag_like)
-        _, makepan, usage = app.schedule('heft')
+interval = len(task_num_list) *len(recipes)
+for i in range(len(method_list)):
+    min_data_3d.append(min_data_list[i*interval: (i+1)*interval])
 
-        delay_min = worker('heft_delay', usage)
-        lookup_min = worker('heft_lookup', usage)
-
-        delay_data.append(delay_min)
-        lookup_data.append(lookup_min)
-        xticks.append(f'{recipe[:4]}.-{num_range}')
-
-fig, ax= plt.subplots()
-ax.plot(xticks, delay_data, '--x', color='#3c6f4f')
-ax.plot(xticks, lookup_data, '--o', color='#edb16d')
-ax.legend(['delaying', 'reservation-based'])
+fig, ax= plt.subplots(figsize=(10, 6))
+for i, data in enumerate(min_data_3d):
+    ax.plot(xticks_flatlist, data, '--x', color=method_list[i][2])
+ax.legend(list(map(lambda method: method[1], method_list)))
 plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment='right')
 
 if 'latex' in os.environ:
@@ -61,4 +82,4 @@ if 'latex' in os.environ:
                 format="eps", dpi=1200, bbox_inches="tight", transparent=True)
 else:
     fig.savefig(
-        'experiments/results/real.png')
+        'experiments/results/real.png', bbox_inches="tight")

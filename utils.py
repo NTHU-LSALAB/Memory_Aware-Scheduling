@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 
-with open('_workflow.json', 'r') as f:
+with open('real_workflow.json', 'r') as f:
     json_file = json.load(f)
     edge_list = []
     node_attrs = {}

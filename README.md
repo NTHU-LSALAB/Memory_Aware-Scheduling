@@ -3,7 +3,7 @@
 ## Usage
 
 ```
-pip install matplotlib numpy networkx
+pip install matplotlib numpy networkx wfcommons
 python main.py
 ```
 

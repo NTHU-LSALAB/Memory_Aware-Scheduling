@@ -14,5 +14,8 @@ app.read_input(args.input, weight=False)
 _, min_makespan, max_usage = app.schedule('heft')
 print(min_makespan, max_usage)
 
-_, makespan, usage = app.schedule('heft_delay', 435)
+_, makespan, usage = app.schedule('heft_delay', 420)
+print(makespan, usage)
+
+_, makespan, usage = app.schedule('heft_lookup', 380, {'depth': 2})
 print(makespan, usage)

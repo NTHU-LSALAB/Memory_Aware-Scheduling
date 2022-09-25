@@ -1,6 +1,7 @@
 from functools import cmp_to_key
 import json
 import sys
+from typing import Union
 from algorithms.algo_base import AlgoBase
 from algorithms.cpop import CPOP
 from algorithms.cpop_delay import CPOPDelay
@@ -42,7 +43,7 @@ class DAG:
         return algo
 
     # dag could be file name, dict object
-    def read_input(self, dag: str, weight=True, format='default'):
+    def read_input(self, dag: Union[str, dict], weight=True, format='default'):
         if isinstance(dag, str):
             dag = json.load(open(dag, 'r'))
        
