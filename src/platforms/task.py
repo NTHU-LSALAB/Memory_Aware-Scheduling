@@ -65,6 +65,10 @@ class MTask(Node):
         self.type = type
         self.buffer = buffer
         self.io_type = io_type
+        # cpop
+        self.rank_upward: int = None
+        self.rank_downward: int = None
+        self.is_critical: bool = None
 
     @property
     def t_out_edges(self):

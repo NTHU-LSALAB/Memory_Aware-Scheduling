@@ -6,6 +6,7 @@ from algorithms.algo_base import AlgoBase
 from algorithms.cpop import CPOP
 from algorithms.cpop_delay import CPOPDelay
 from algorithms.cpop_lookup import CPOPLookup
+from algorithms.cpop_sbac import CPOPSBAC
 from algorithms.heft_delay import HEFTDelay
 from algorithms.heft_lookup import HEFTLookup
 from algorithms.ippts import IPPTS
@@ -38,6 +39,8 @@ class DAG:
                 'ippts': IPPTS(),
                 'ippts_lookup': IPPTSLookup(),
                 'mem_first': MemFirst(),
+                'heft_sbac': SBAC(),
+                'cpop_sbac': CPOPSBAC(),
                 'sbac': SBAC()
             }[algo.lower()]
         return algo

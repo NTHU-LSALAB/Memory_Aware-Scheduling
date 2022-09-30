@@ -2,7 +2,7 @@ from .generator import workflows_generator
 import json
 
 def main():
-    dag, _, _ = workflows_generator('rand', 300)
+    dag = workflows_generator('rand', 300)
     with open('rand_workflow.json', 'w') as f:
         json.dump({
             "nodes": dag['nodes'],

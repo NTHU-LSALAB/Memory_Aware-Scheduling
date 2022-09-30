@@ -1,100 +1,83 @@
+import collections
 import sys
 sys.path.insert(0, 'src')
+sys.path.insert(0, './')
 import argparse
-import random
 import numpy as np
+from converter import converter
 from graph.dag import DAG
+from lib.rand_workflow_generator import workflows_generator
+from lib.real_workflow_generator import parse_dax, save_dag
 import matplotlib.pyplot as plt
-import matplotlib
 import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--approach', '-a', default='heft')
-parser.add_argument('--input', '-i', default='rand_workflow.json')
+parser.add_argument('--input', '-i', default='samples/size/sample.15.json')
 args = parser.parse_args()
 
-depths = [0, 1, 2]
+method_list = [('heft_delay', 'delaying', '#00994c', '--o'), ('sbac',
+                                                       'sbac', '#004C99', '--^'), ('heft_lookup', 'reservation-based', '#edb16d', '--x')]
 
+def prune_points(data, memories):
+    for i, (d, m) in enumerate(zip(data, memories)):
+        for dd, mm in zip(data, memories):
+            if d > dd and m > mm:
+                data[i] = min(data[i], dd)
+    return data, memories
 
 def run_experiment():
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(12, 6))
 
     dag = DAG()
-    # dag.read_input('samples/size/sample.15.json', weight=False)
-    dag.read_input(args.input, weight=False)
-    # dag.read_input('samples/mb/sample.2.json', weight=False, format='mb')
-    _, makespan_origin, usage = dag.schedule(args.approach)
-    memory_sizes = [usage - 10*i for i in range(100)]
-    print(usage)
+    # dag_like = parse_dax('SIGHT', task_num=50)
+    # dag_like = converter(dag_like)
+    # save_dag(dag_like, '-tradeoff')
+    dag.read_input('./experiments/data/tradeoff.json', format='mb')
+    _, _, usage = dag.schedule(args.approach)
 
-    def worker(method, marker, label):
-        data = []
-        memorys = []
-        for depth in depths:
-            depth_row = [depth]
-            for memory_size in memory_sizes:
-                # print(memory_size)
-                if memory_size <= 0:
-                    memorys.append(memory_size)
-                    depth_row.append('N/A')
-                    continue
+    def worker(method, usage, marker, label, color):
+        mem_size = usage
+        mem_data_map = {}
+        while True:
+            if mem_size <= 0:
+                break
+
+            feasible = False
+            for depth in [0] if method != 'heft_lookup' else [0, 1, 2]:
                 try:
-                    _, makespan, memory = dag.schedule(
-                        method, memory_size, {"depth": depth, "plot": False})
-                    # print(makespan, memory)
-                    depth_row.append(makespan)
-                    memorys.append(memory)
-                    # print(memory)
+                    _, makepsan, memory = dag.schedule(
+                        method, mem_size, {"depth": depth, "plot": False})
+                    if makepsan > sys.maxsize/2:
+                        continue
+                    mem_data_map[memory] = min(makepsan, mem_data_map[memory] if memory in mem_data_map else sys.maxsize)
+                    feasible = True
                 except Exception:
-                    memorys.append(memory_size)
-                    # print('N/A')
-                    depth_row.append('N/A')
-            data.append(depth_row[1:])
-        data = np.array(data)
-        data = data.T.tolist()
-        data = list(map(lambda mems:
-                        min(list(map(lambda mem: sys.maxsize if mem == 'N/A' else int(mem), mems))), data))
-        def remove_bad_points(data):
-            x = []
-            y = []
-            for i, makespan in enumerate(data):
-                if makespan > sys.maxsize/2:
                     continue
-                x.append(makespan)
-                y.append(memorys[i])
-
-            remove_indices = []
-            for i, (t, m) in enumerate(zip(x, y)):
-                for xx, yy in zip(x, y):
-                    if t >= xx and m > yy:
-                        remove_indices.append(i)
-            x = [i for j, i in enumerate(x) if j not in remove_indices]
-            y = [i for j, i in enumerate(y) if j not in remove_indices]
-            return x, y
-
-        x, y = remove_bad_points(data)
-        ax.plot(y, x, marker, label=label, lw=1, color='#333333',
+            if not feasible:
+                break
+            
+            mem_size -= 10
+        
+        mem_data_map = collections.OrderedDict(sorted(mem_data_map.items()))
+        data = list(mem_data_map.values())
+        memories = list(mem_data_map.keys())
+        data, memories = prune_points(data, memories)
+        ax.plot(memories, data, marker, label=label, lw=1, color=color,
                 dashes=(5, 3), markerfacecolor='none')
 
-    worker(f'{args.approach}_lookup', '--o', 'reservation-based')
-    worker(f'{args.approach}_delay', '--x', 'delaying')
-    # worker(f'sbac', '--^', 'sbac')
+    for method in method_list:
+        worker(method[0], usage, method[3], method[1], method[2])
+
     ax.legend(loc="upper right")
 
-    # for graph in range(num_of_graph):
-    #     worker(graph)
-    # wb.save(f'{folder}/result.xlsx')
-    # ax.set_title("Memory-Makespan")
-    ax.set_xlabel('Memory Usage', fontsize=20)
-    ax.set_ylabel('Makespan', fontsize=20)
-    # ax.set_ylim(-1, 0)
+    ax.set_xlabel('Memory usage', fontsize=14)
+    ax.set_ylabel('Makespan (time unit)', fontsize=14)
     if 'latex' in os.environ:
-        fig.savefig(f'experiments/results/{args.approach}_tradeoff.eps',
-                    format="eps", dpi=1200, bbox_inches="tight", transparent=True)
+        fig.savefig(f'experiments/results/{args.approach}_tradeoff.pdf', bbox_inches='tight')
     else:
-        fig.savefig(f'experiments/results/{args.approach}_tradeoff.png')
+        fig.savefig(f'experiments/results/{args.approach}_tradeoff.png', bbox_inches='tight')
     plt.close()
 
 
-# generate_graph()
 run_experiment()

@@ -10,34 +10,34 @@ sys.path.insert(0, 'src')
 from lib.generator import random_cpu, random_mem
 
 recipe_map = {
-    'montage': {
+    'Mont': {
         'name': 'Montage',
         'recipe': MontageRecipe,
         'value': [60, 100, 200]
     },
-    'cyber': {
+    'Cyb': {
         'name': 'CyberShake',
         'recipe': GenomeRecipe,
         'value': [54, 100, 200]
     },
-    'epig': {
+    'Epig': {
         'name': 'Epigenomics',
         'recipe': EpigenomicsRecipe,
         'value': [50, 100, 200]
     },
-    'sight': {
-        'name': 'Sight',
+    'SIGHT': {
+        'name': 'Sipht',
         'recipe': SeismologyRecipe,
-        'value': [103, 150, 200]
+        'value': [50, 100, 200]
     }, 
-    'inspiral': {
+    'LIGO': {
         'name': 'Inspiral',
         'recipe': SeismologyRecipe,
-        'value': [103, 150, 200]
+        'value': [50, 100, 200]
     }
 }
 
-def parse_dax(recipe = 'montage', task_num = 50):
+def parse_dax(recipe = 'Montage', task_num = 50):
     dax = recipe_map[recipe]['name']
     dax = md.parse(f'./realworld_dax/{dax}_{task_num}.xml')
     nodes = dax.getElementsByTagName('job')
@@ -98,15 +98,14 @@ def dag_generator(recipe = 'montage', task_num = 103):
     }
 
 
-def save_dag(dag, affix=''):
-    with open(f'real_workflow{affix}.json', 'w') as f:
+def save_dag(dag, filename = 'real_workflow.json'):
+    with open(filename, 'w') as f:
         json.dump(dag, f, indent=4)
-    # workflow.write_json(pathlib.Path('workflow.json'))
 
 def main():
-    dag = parse_dax('./realworld_dax/CyberShake_50.xml')
+    dag = parse_dax()
     # dag = dag_generator(task_num=50, recipe='epig')
-    save_dag(dag)
+    save_dag(dag, '-montage')
 
 if __name__ == '__main__':
     main()

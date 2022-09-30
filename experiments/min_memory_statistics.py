@@ -1,6 +1,5 @@
 import argparse
 import sys
-
 sys.path.insert(0, 'src')
 sys.path.insert(0, './')
 from converter import converter
@@ -8,6 +7,7 @@ from multiprocessing import Pool
 import os
 import matplotlib.pyplot as plt
 from lib.rand_workflow_generator import workflows_generator
+from lib.real_workflow_generator import save_dag
 from platforms.app import App
 import time
 
@@ -17,7 +17,7 @@ max_out_list = [1, 2, 3, 4, 5]
 alpha_list = [0.5, 1.0, 1.5]
 beta_list = [0.0, 0.5, 1.0, 2.0]
 iterations = 100
-method_list = [('heft_dalay', 'delaying', '#3c6f4f'), ('sbac', 'sbac', 'blue'), ('heft_lookup', 'reservation-based', '#edb16d')]
+methods = [('delay', 'delaying', '#00994c'), ('sbac', 'sbac', '#004C99'), ('lookup', 'reservation-based', '#edb16d')]
 
 def worker(app, method, usage):
     last_memory = mem_size = usage
@@ -26,7 +26,7 @@ def worker(app, method, usage):
             break
 
         feasible = False
-        for depth in [0] if method != 'heft_lookup' else [0, 1, 2]:
+        for depth in [0] if 'lookup' not in method else [0, 1, 2]:
             try:
                 _, makepsan, memory = app.schedule(
                     method, mem_size, {"depth": depth, "plot": False})
@@ -41,11 +41,13 @@ def worker(app, method, usage):
         mem_size -= 10
 
 
-def f(app, method, kwargs):
-    dag_like, _, _ = workflows_generator(**kwargs)
-    dag_like = converter(dag_like)
-    app.read_input(dag_like, format='mb')
-    _, _, usage = app.schedule('heft')
+def f(i, app, method, kwargs, algorithm = 'heft'):
+    # dag_like = workflows_generator(**kwargs)
+    # dag_like = converter(dag_like)
+    filename = '-'.join(list(map(lambda item: item[0] + '-' + str(item[1]),kwargs.items()))) + '-' + str(i)
+    # save_dag(dag_like, f'./experiments/data/rand/{filename}.json')
+    app.read_input(f'./experiments/data/rand/{filename}.json', format='mb')
+    _, _, usage = app.schedule(algorithm)
 
     return worker(app, method, usage)
 
@@ -54,7 +56,10 @@ def main():
     
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', '-m', default='t')
+    parser.add_argument('--algorithm', '-a', default='heft')
     args = parser.parse_args()
+
+    method_list = list(map(lambda method: (args.algorithm+'_'+method[0], *method[1:]), methods))
 
     name, exp_list = {
         'p': ('processor', processor_list),
@@ -78,7 +83,7 @@ def main():
         with Pool() as p:
             for i, method in enumerate(method_list):
                 min_list[i] = p.starmap(
-                    f, [(app, method[0], kwargs) for _ in range(iterations)])
+                    f, [(iter, app, method[0], kwargs, args.algorithm) for iter in range(iterations)])
 
         columns.append(min_list)
         end = time.time()
@@ -88,7 +93,8 @@ def main():
     gs = fig.add_gridspec(1, len(columns), hspace=0, wspace=0)
     axs = gs.subplots(sharex='col', sharey='row')
     for i, ax in enumerate(axs):
-        bplot = ax.boxplot(columns[i], vert=True,  # vertical box alignment
+        ax.set_zorder(10 - i)
+        bplot = ax.boxplot(columns[i], vert=True,
                            patch_artist=True, boxprops=dict(facecolor=(0, 0, 0, 0)), whiskerprops=dict(linestyle='dashed', linewidth=1.0, color='#333'), medianprops=dict(color='#ff3333'), capprops=dict(color='#333'), widths=.4)
         colors = list(map(lambda method: method[2], method_list))
         idx = 0
@@ -106,18 +112,20 @@ def main():
 
         ax.set_xlabel(f'{name} = {exp_list[i]}')
         ax.set_xticks([])
-        if i != 0:
+        if i == 0:
+            ax.set_ylabel('Minimum memory', fontsize=14)
+            ax.legend(bplot['boxes'], list(map(lambda method: method[1], method_list)), loc='upper left', fontsize=13)
+        else:
             ax.tick_params(left=False)
             ax.spines['left'].set_visible(False)
-
-    fig.legend(bplot['boxes'], list(map(lambda method: method[1], method_list)))
+        # if i == len(axs) - 1:
 
     if 'latex' in os.environ:
-        fig.savefig(f'experiments/results/{name}-statistics.eps',
-                    format="eps", dpi=1200, bbox_inches="tight", transparent=True)
+        fig.savefig(
+            f'experiments/results/{args.algorithm}-{name}-statistics.pdf', bbox_inches='tight')
     else:
         fig.savefig(
-            f'experiments/results/{name}-statistics.png', bbox_inches='tight')
+            f'experiments/results/{args.algorithm}-{name}-statistics.png', bbox_inches='tight')
 
 
 if __name__ == '__main__':

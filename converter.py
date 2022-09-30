@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from graph.dag import DAG
 
 def converter(dag_obj, format='default'):
+    if isinstance(dag_obj, str):
+        dag_obj = json.load(open(dag_obj, 'r'))
     nodelist = []
     edgelist = []
     if isinstance(dag_obj, dict):

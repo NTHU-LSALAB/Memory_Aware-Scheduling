@@ -82,7 +82,7 @@ fig, ax = plt.subplots()
 ax.grid(axis='y')
 ax.set_axisbelow(True)
 rects = ax.bar(X + 0.00, data[0], color='#edb16d', alpha=0.9, width=0.25)
-rects2 = ax.bar(X + 0.26, data[1], color='#3c6f4f', alpha=0.9, width=0.25)
+rects2 = ax.bar(X + 0.26, data[1], color='#00994c', alpha=0.9, width=0.25)
 ax.bar(X + 0.52, data[2], color='#1f57a4', alpha=0.9, width=0.25)
 
 
@@ -115,7 +115,7 @@ fig_exec, ax_exec = plt.subplots()
 ax_exec.grid(axis='y')
 ax_exec.set_axisbelow(True)
 rects = ax_exec.bar(X + 0.00, data_exec[0], fc='white', ec='#edb16d', hatch='xx', width=0.25)
-rects2 = ax_exec.bar(X + 0.28, data_exec[1], fc='white', ec='#3c6f4f', hatch='xx', width=0.25)
+rects2 = ax_exec.bar(X + 0.28, data_exec[1], fc='white', ec='#00994c', hatch='xx', width=0.25)
 ax_exec.bar(X + 0.524, data_exec[2], fc='white', ec='#1f57a4', hatch='xx', width=0.25)
 
 

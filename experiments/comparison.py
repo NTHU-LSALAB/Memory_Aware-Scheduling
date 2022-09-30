@@ -25,7 +25,7 @@ for i, slot in enumerate(slots):
             data[j][i] = 0
 
 X = np.arange(len(slots))
-colors = ['red', 'blue', 'green', 'grey', 'orange']
+colors = ['red', '#004C99', 'green', 'grey', 'orange']
 for i in range(len(methods)):
     if methods[i] == 'heft':
         ax.bar(X + 0.1*i, data[i], color='black', width=0.1)

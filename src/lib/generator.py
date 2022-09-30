@@ -124,7 +124,7 @@ def random_mem(r, is_buffer=False):
         return round(random.uniform(0.05 * r, 0.5 * r))
 
 
-def workflows_generator(task_num=20, max_out=2, alpha=1, beta=1.0, processor=3, t_unit=10, resource_unit=100):
+def workflows_generator(task_num=20, max_out=2, alpha=1.0, beta=1.0, processor=3, t_unit=10, resource_unit=100):
     t = t_unit  # s   time unit
     r = resource_unit  # resource unit
     edges, pos = DAGs_generate(task_num, max_out, alpha, beta)
@@ -153,7 +153,7 @@ def workflows_generator(task_num=20, max_out=2, alpha=1, beta=1.0, processor=3, 
     dag['edges'] = dag['links']
     del dag['links']
 
-    return dag, edges, pos
+    return dag
 
 
 if __name__ == '__main__':
