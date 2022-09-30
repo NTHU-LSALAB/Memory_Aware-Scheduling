@@ -72,7 +72,7 @@ interval = len(task_num_list) *len(recipes)
 for i in range(len(method_list)):
     min_data_3d.append(min_data_list[i*interval: (i+1)*interval])
 
-fig, ax= plt.subplots(figsize=(12, 6))
+fig, ax= plt.subplots(figsize=(15, 6))
 
 bar_width = 0.2
 X = br = np.arange(len(xticks_flatlist))

@@ -89,13 +89,13 @@ def main():
         end = time.time()
         print('time:', format('%.2f' % (end - start)))
 
-    fig = plt.figure(figsize=(8, 6))
+    fig = plt.figure(figsize=(15 if args.algorithm == 'cpop' else 8, 6))
     gs = fig.add_gridspec(1, len(columns), hspace=0, wspace=0)
     axs = gs.subplots(sharex='col', sharey='row')
     for i, ax in enumerate(axs):
         ax.set_zorder(10 - i)
         bplot = ax.boxplot(columns[i], vert=True,
-                           patch_artist=True, boxprops=dict(facecolor=(0, 0, 0, 0)), whiskerprops=dict(linestyle='dashed', linewidth=1.0, color='#333'), medianprops=dict(color='#ff3333'), capprops=dict(color='#333'), widths=.4)
+                           patch_artist=True, boxprops=dict(facecolor=(0, 0, 0, 0)), whiskerprops=dict(linestyle='dashed', linewidth=1.0, color='#333'), medianprops=dict(color='#ff3333'), capprops=dict(color='#333'), widths=.3 if args.algorithm == 'cpop' else .4)
         colors = list(map(lambda method: method[2], method_list))
         idx = 0
         for box, median, flier, color in zip(bplot['boxes'], bplot['medians'], bplot['fliers'], colors):
@@ -118,7 +118,6 @@ def main():
         else:
             ax.tick_params(left=False)
             ax.spines['left'].set_visible(False)
-        # if i == len(axs) - 1:
 
     if 'latex' in os.environ:
         fig.savefig(

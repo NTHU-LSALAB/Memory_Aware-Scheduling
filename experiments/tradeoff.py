@@ -27,7 +27,7 @@ def prune_points(data, memories):
     return data, memories
 
 def run_experiment():
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(15, 6))
 
     dag = DAG()
     # dag_like = parse_dax('SIGHT', task_num=50)
