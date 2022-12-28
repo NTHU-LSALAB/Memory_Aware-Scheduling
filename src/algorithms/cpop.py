@@ -5,7 +5,7 @@ from decorators import base, delay, reserve, sbac
 
 from platforms.task import Task
 
-@base
+@base('cpop')
 class CPOP(AlgoBase):
     def task_compare(self, task1: Task, task2: Task):
         if task2.priority == task1.priority:
@@ -139,14 +139,14 @@ class CPOP(AlgoBase):
 
         return selected_ast, min_eft, min_eft_procId
 
-@delay
+@delay('cpop')
 class CPOPDelay(CPOP):
     pass
 
-@reserve
+@reserve('cpop')
 class CPOPReserve(CPOP):
     pass
 
-@sbac
+@sbac('cpop')
 class CPOPSBAC(CPOP):
     pass

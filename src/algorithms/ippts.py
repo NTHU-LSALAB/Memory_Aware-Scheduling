@@ -5,7 +5,7 @@ from decorators import base, delay, reserve, sbac
 
 from platforms.task import Task
 
-@base
+@base('ippts')
 class IPPTS(AlgoBase):
 
     def task_compare(self, task1: Task, task2: Task):
@@ -75,14 +75,14 @@ class IPPTS(AlgoBase):
 
         return selected_ast, min_eft, min_eft_procId
 
-@delay
+@delay('ippts')
 class IPPTSDelay(IPPTS):
     pass
 
-@reserve
+@reserve('ippts')
 class IPPTSReserve(IPPTS):
     pass
 
-@sbac
+@sbac('ippts')
 class IPPTSSBAC(IPPTS):
     pass

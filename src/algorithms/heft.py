@@ -7,7 +7,7 @@ from decorators import base, delay, reserve, sbac
 from platforms.task import Task, MTask
 
 
-@base
+@base('heft')
 class HEFT(AlgoBase):
     def task_compare(self, task1: Task, task2: Task):
         # return task2.priority - task1.priority
@@ -63,15 +63,15 @@ class HEFT(AlgoBase):
 
         return selected_ast, min_eft, min_eft_procId
 
-@delay
+@delay('heft')
 class HEFTDelay(HEFT):
     pass
 
-@reserve
+@reserve('heft')
 class HEFTReserve(HEFT):
     pass
 
-@sbac
+@sbac('heft')
 class HEFTSBAC(HEFT):
     pass
 

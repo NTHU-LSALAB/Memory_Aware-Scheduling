@@ -22,6 +22,9 @@ print(makespan, usage)
 ## Experiments
 
 ```bash
+# install dependencies
+pip install networkx wfcommons
+
 # influence of different k
 python experiments/depth.py
 # minimum memory on random dags
@@ -43,3 +46,8 @@ You can find different DAGs under `samples` directory.
 ## Real world applications
 
 You can find real world applications in the paper under `realworld_dax` directory.
+- Montage
+- CyberShake
+- Epigenomics
+- SIGHT
+- LIGO (Inspiral)

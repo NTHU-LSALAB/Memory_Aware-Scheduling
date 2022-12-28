@@ -2,11 +2,7 @@ from functools import cmp_to_key
 import json
 import sys
 from typing import Union
-from algorithms.algo_base import AlgoBase
-from algorithms.cpop import CPOP, CPOPDelay, CPOPReserve, CPOPSBAC
-from algorithms.heft import HEFT, HEFTDelay, HEFTReserve, HEFTSBAC
-from algorithms.ippts import IPPTS, IPPTSDelay, IPPTSReserve, IPPTSSBAC
-# from algorithms.mem_first import MemFirst
+from algorithms import get_scheduling_algorithm
 from platforms.dep import Dep
 from platforms.task import MTask
 from platforms.task import Task
@@ -20,26 +16,6 @@ class DAG:
     def __init__(self, dag = None):
         if dag is not None:
             self.read_input(dag)
-    def get_algo(self, algo, decorator=None):
-        if decorator is not None and decorator not in ('delay', 'reserve', 'sbac'):
-            raise ValueError('Not supported decorator')
-        # if decorator:
-        #     algo = f'{algo}_{decorator}'
-        if isinstance(algo, str):
-            algo: AlgoBase = {
-                'heft': HEFT(),
-                'heft_delay': HEFTDelay(),
-                'heft_reserve': HEFTReserve(),
-                'heft_sbac': HEFTSBAC(),
-                'cpop': CPOP(),
-                'cpop_delay': CPOPDelay(),
-                'cpop_reserve': CPOPReserve(),
-                'cpop_sbac': CPOPSBAC(),
-                'ippts': IPPTS(),
-                'ippts_reserve': IPPTSReserve(),
-                # 'mem_first': MemFirst(),
-            }[algo.lower()]
-        return algo
 
     # dag could be file name, dict object
     def read_input(self, dag: Union[str, dict], weight=True, format='default'):
@@ -73,8 +49,8 @@ class DAG:
             self.edges.append(new_edge)
             
 
-    def schedule(self, algo, memory=None, algo_options: dict = {}) -> tuple[list[list[Task]], int]:
-        self.algo = self.get_algo(algo)
+    def schedule(self, algo, strategy=None, memory=None, algo_options: dict = {}) -> tuple[list[list[Task]], int]:
+        self.algo = get_scheduling_algorithm(algo, strategy=strategy)
         snapshot = algo_options.get('snapshot', False)
         if memory:
             self.algo.memory = Memory(memory, snapshot)
