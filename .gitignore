@@ -6,9 +6,11 @@ samples/sample.2.*.json
 
 out/**/*.png
 out/**/*.eps
+out/**/*.pdf
 
 experiments/results/**
 !experiments/results/.gitkeep
+!experiments/results/*.json
 
 *.png
 *.eps

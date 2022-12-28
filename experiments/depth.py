@@ -1,101 +1,103 @@
+import json
+from multiprocessing import Pool
 import os
 import sys
 sys.path.insert(0, 'src')
-from lib.utils import get_parallelism_degree, get_parallelism_minmax, show_parallelsim_degree
+from lib.utils import get_parallelism_degree
 import matplotlib.pyplot as plt
-import numpy as np
 from platforms.app import App
 from lib.rand_workflow_generator import workflows_generator
+import numpy as np
 
 app = App()
-# app.read_input('samples/width/sample.5.json', weight=False)
 
-depth_list = [0, 1, 2, 3, 4]
-# data = [0 for _ in range(len(depths))]
-# data_minmax = [None for _ in range(len(depths))]
-# data_makespan = [0 for _ in range(len(depths))]
-# _, _, original_usage = app.schedule('heft')
+depth_list = [0, 1, 2, 3, 4, 5]
 
-# # Should we let the memory size constant?
-# fig, ax = plt.subplots()
-# for depth, i in enumerate(depths):
-#     schedule, makespan, usage = app.schedule(
-#         'heft_lookup', original_usage, {"depth": depth})
-#     data_makespan[i] = makespan
-#     data[i] = get_parallelism_degree(schedule, makespan)
-#     data_minmax[i] = get_parallelism_minmax(schedule, makespan)
-#     degree = show_parallelsim_degree(schedule, makespan)
-#     X = np.arange(makespan)
-#     ax.step(X, degree)
-#     print(depth, makespan, usage, data[i])
-# ax.set_yticks(np.arange(len(schedule)) + 1)
-# ax.legend(depths)
-
-# _fig, _ax = plt.subplots()
-# _X = np.arange(len(depths))
-# _ax.plot(_X, data)
-# # mins = list(map(lambda minmax: minmax[0], data_minmax))
-# # maxs = list(map(lambda minmax: minmax[1], data_minmax))
-# # # _ax.plot(_X, data)
-# # _ax.vlines(_X, mins, maxs)
-# data.insert(0, 1.5)
-# _ax.set_yticks(list(map(lambda d: float(format(d, '.2f')), (data))))
-# _ax.set_xticks(_X)
-# _ax.set_xlabel('Depth k', fontsize=20)
-# _ax.set_ylabel('Degree of parallelism', fontsize=20)
-
-
-# fig_makespan, ax_makespan = plt.subplots()
-# ax_makespan.plot(_X, data_makespan)
-# # ax_makespan.set_yticks(list(map(lambda d: d, data_makespan)))
-# ax_makespan.set_xticks(_X)
-# ax_makespan.set_xlabel('Depth k', fontsize=20)
-# ax_makespan.set_ylabel('Makespan', fontsize=20)
-
-# if 'latex' in os.environ:
-#     _fig.savefig('experiments/results/depth_parallel.eps', format="eps", dpi=1200, bbox_inches="tight", transparent=True)
-# else:
-#     _fig.savefig('experiments/results/depth_parallel.png')
-
-# if 'latex' in os.environ:
-#     fig.savefig('experiments/results/depth.eps', format="eps", dpi=1200, bbox_inches="tight", transparent=True)
-# else:
-#     fig.savefig('experiments/results/depth.png')
-
-# if 'latex' in os.environ:
-#     fig_makespan.savefig('experiments/results/depth_makespan.eps', format="eps", dpi=1200, bbox_inches="tight", transparent=True)
-# else:
-#     fig_makespan.savefig('experiments/results/depth_makespan.png')
-
-
-data = [[] for _ in depth_list]
 iterations = 100
-for iteration in range(iterations):
+
+
+def worker(app, depth, usage):
+    last_memory = mem_size = usage
+    while True:
+        if mem_size <= 0:
+            break
+        try:
+            _, makepsan, memory = app.schedule(
+                'heft_lookup', mem_size, {"depth": depth, "plot": False})
+            last_memory = memory
+            if makepsan > sys.maxsize/2:
+                return last_memory
+        except Exception:
+            return last_memory
+        mem_size -= 10
+
+def f(depth):
     dag_like = workflows_generator()
     app.read_input(dag_like)
     _, _, usage = app.schedule('heft')
+    try:
+        schedule, makespan, _ = app.schedule('heft_lookup', usage, {"depth": depth})
+        min_memory = worker(app, depth, usage)
+        return get_parallelism_degree(schedule, makespan), min_memory
+    except:
+        pass
+
+if os.path.exists('./experiments/results/depth_statistics.json'):
+    with open('./experiments/results/depth_statistics.json', 'r') as f:
+        result = json.load(f)
+        para_list = result['para']
+        min_memory_list = result['min_memory']
+else:
+    data = [[] for _ in depth_list]
+    min_memory_list = [[] for _ in depth_list]
+    para_list = [[] for _ in depth_list]
     for i, depth in enumerate(depth_list):
-        try:
-            schedule, makespan, _ = app.schedule('heft_lookup', usage, {"depth": depth})
-            data[i].append(get_parallelism_degree(schedule, makespan))
-        except:
-            pass
+        with Pool() as p:
+            data[i] = p.starmap(f, [[depth] for _ in range(iterations)])
+            para_list[i] = list(map(lambda d: d[0], filter(lambda d: d != None, data[i])))
+            min_memory_list[i] = list(map(lambda d: d[1], filter(lambda d: d != None, data[i])))
 
-fig, ax = plt.subplots()
-bplot = ax.boxplot(data, vert=True,  # vertical box alignment
-                           patch_artist=True, boxprops=dict(facecolor=(0, 0, 0, 0)), whiskerprops=dict(linestyle='dashed', linewidth=1.0, color='#333'), medianprops=dict(color='#ff3333'), capprops=dict(color='#333'), widths=.4)
+    with open('./experiments/results/depth_statistics.json', 'w') as f:
+        json.dump({
+            'para': para_list,
+            'min_memory': min_memory_list
+        }, f, indent=4)
+            
 
-ax.set_xticks([1, 2, 3, 4, 5], depth_list)
-for median in bplot['medians']:
+fig, ax = plt.subplots(figsize=(8, 3.5))
+ax2 = ax.twinx()
+X = np.arange(len(depth_list))
+br = 0.3
+bplot = ax.boxplot(para_list, vert=True, positions=X, showfliers=False, # vertical box alignment
+                           patch_artist=True, boxprops=dict(facecolor=(0, 0, 0, 0)), whiskerprops=dict(linestyle='dashed', linewidth=1.0, color='#333'), medianprops=dict(color='#ff3333'), capprops=dict(color='#333'), widths=.2)
+
+mplot = ax2.boxplot(min_memory_list, vert=True, positions=X+br, showfliers=False,  # vertical box alignment
+                           patch_artist=True, boxprops=dict(facecolor=(0, 1, 0, 0)), whiskerprops=dict(linestyle='dashed', linewidth=1.0, color='#333'), medianprops=dict(color='#ff3333'), capprops=dict(color='#333'), widths=.2)
+ax.set_xticks(X+0.15, labels=depth_list)
+ax.set_xlabel('Depth', fontsize=14)
+ax.set_ylabel('Degree of parallelism (# processor)', fontsize=14)
+ax2.set_ylabel('Minimum memory', color='blue', fontsize=14)
+
+for mbox, box, mmedian, median in zip(mplot['boxes'], bplot['boxes'], mplot['medians'], bplot['medians']):
+    # box.set_edgecolor('orange')
+    mbox.set_edgecolor('blue')
     (x_l, y), (x_r, _) = median.get_xydata()
 
-    ax.text(x_r + 0.05, y,
-            '%.2f' % y,
-            va='center',
-            ha='left',
-            fontsize=8)
+    # ax.text(x_l - 0.02, y,
+    #         '%.2f' % y,
+    #         va='center',
+    #         ha='right',
+    #         fontsize=8)
+
+    (x_l, y), (x_r, _) = mmedian.get_xydata()
+
+    # ax2.text(x_r + 0.02, y,
+    #         '%d' % y,
+    #         va='center',
+    #         ha='left',
+    #         fontsize=8)
 
 if 'latex' in os.environ:
-    fig.savefig('experiments/results/depth_statistics.eps', format="eps", dpi=1200, bbox_inches="tight", transparent=True)
+    fig.savefig('experiments/results/depth_statistics.pdf', bbox_inches="tight")
 else:
-    fig.savefig('experiments/results/depth_statistics.png')
+    fig.savefig('experiments/results/depth_statistics.png', bbox_inches="tight")

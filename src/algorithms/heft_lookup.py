@@ -1,4 +1,5 @@
 from copy import deepcopy
+from functools import cmp_to_key
 from heapq import heapify, heappop, heappush
 from algorithms.algo_base import AlgoBase
 from algorithms.heft import calculate_priority, find_processor
@@ -60,6 +61,26 @@ class HEFTLookup(AlgoBase):
 
     def reserve(self, task: Task, depth=1):
         return self.__reserve_re(task, depth)
+        # tasks = self.__collect_tasks(task, depth)
+        # can_reserve = True
+        # for t in sorted(tasks):
+        #     can_reserve = can_reserve and self.allocate_dependencies(t)
+
+        # return can_reserve
+
+    def __collect_tasks(self, task: Task, depth=1):
+        if depth == -1:
+            return []
+
+        tasks = [task]
+        # can_reserve = self.allocate_dependencies(task)
+
+        # reserve for children
+        for edge in task.t_out_edges:
+            tasks.extend(self.__collect_tasks(
+                edge.target, depth-1))
+
+        return tasks
 
     def __reserve_re(self, task: Task, depth):
         if depth == -1:
@@ -204,7 +225,16 @@ class HEFTLookup(AlgoBase):
 
     def allocate_dependencies(self, task: Task):
         checked = True
-        for edge in task.t_in_edges:
+        def edge_compare(edge1, edge2):
+            task1 = edge1.source
+            task2 = edge2.source
+            if task1.priority == task2.priority:
+                return task1.id > task2.id
+            else:
+                return task1.priority > task2.priority
+        # print('current:', task.id)
+        for edge in sorted(task.t_in_edges, key=cmp_to_key(edge_compare)):
+            # print(edge.source.priority)
             checked = checked and self.allocate_dependencies(edge.source)
         return checked and self.allocate_memory(task)
 

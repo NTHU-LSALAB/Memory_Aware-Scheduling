@@ -126,6 +126,9 @@ class HEFTDelay(AlgoBase):
             suffix = options.get('suffix', '')
             self.memory.plot(
                 makespan, filename=f'heft-delay{suffix}')
+            if options.get('snapshot'):
+                self.memory.plot_snapshot(
+                    makespan, filename=f'heft-delay{suffix}')
             self.plot(schedule, makespan, f'heft-delay{suffix}')
         return schedule, makespan, self.memory.max()
 

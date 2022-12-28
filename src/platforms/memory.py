@@ -192,7 +192,7 @@ class Memory:
         return max(list(map(lambda slot: slot.addr[1], self.slots)))
 
     def plot(self, makespan=None, filename='allocation', slots=None):
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(8, 5))
         slots = slots if slots else self.slots
         for slot in slots:
             if slot.size == 0:
@@ -207,11 +207,13 @@ class Memory:
 
             # print(slot.task.id sif slot.task else 'I', slot.pos, slot.length, slot.size)
             plt.annotate(('B' if slot.is_buffer else 'O') + (str(slot.task.mId) if hasattr(slot.task, 'mId') else str(slot.task.id)), (cx, cy), color='black',
-                         fontsize=8, ha='center', va='center')
+                         fontsize=16, ha='center', va='center')
         ax.set_ylim(0, self.max() + 10)
         ax.set_xlim(0, makespan+10 if makespan else self.DEADLINE)
-        ax.set_xlabel('Time', fontsize=20)
-        ax.set_ylabel('Address', fontsize=20)
+        ax.set_xlabel('Time', fontsize=30)
+        ax.set_ylabel('Address', fontsize=30)
+        ax.tick_params(axis='both', which='major', labelsize=18)
+        ax.tick_params(axis='both', which='minor', labelsize=18)
         if self.size is not sys.maxsize:
             ax.axhline(y=self.size, color='red', linestyle='dashed')
             y_ticks = np.append(ax.get_yticks(), self.size)
@@ -220,15 +222,16 @@ class Memory:
         if makespan:
             ax.axvline(x=makespan, linestyle='dashed')
             x_ticks = np.append(ax.get_xticks(), makespan)
+            # x_ticks = np.asarray(ax.get_xticks())
+            # x_ticks[6] = makespan
             ax.set_xticks(x_ticks)
 
         if not os.path.exists('out/memory'):
             os.mkdir('out/memory')
         if 'latex' in os.environ:
-            fig.savefig(f'out/memory/{filename}.eps', format="eps",
-                        dpi=1200, bbox_inches="tight", transparent=True)
+            fig.savefig(f'out/memory/{filename}.pdf', bbox_inches="tight")
         else:
-            fig.savefig(f'out/memory/{filename}.png')
+            fig.savefig(f'out/memory/{filename}.png', bbox_inches="tight")
         plt.close()
 
     def plot_snapshot(self, makespan=None, filename='allocation'):
