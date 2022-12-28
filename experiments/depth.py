@@ -23,7 +23,7 @@ def worker(app, depth, usage):
             break
         try:
             _, makepsan, memory = app.schedule(
-                'heft_lookup', mem_size, {"depth": depth, "plot": False})
+                'heft_reserve', mem_size, {"depth": depth, "plot": False})
             last_memory = memory
             if makepsan > sys.maxsize/2:
                 return last_memory
@@ -36,7 +36,7 @@ def f(depth):
     app.read_input(dag_like)
     _, _, usage = app.schedule('heft')
     try:
-        schedule, makespan, _ = app.schedule('heft_lookup', usage, {"depth": depth})
+        schedule, makespan, _ = app.schedule('heft_reserve', usage, {"depth": depth})
         min_memory = worker(app, depth, usage)
         return get_parallelism_degree(schedule, makespan), min_memory
     except:

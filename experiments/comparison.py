@@ -8,7 +8,7 @@ import os
 app = App()
 app.read_input('samples/sample.sbac.json', weight=False, format='mb')
 
-methods = ['heft_lookup', 'heft_lookup', 'heft_lookup', 'heft_delay', 'sbac', 'heft']
+methods = ['heft_reserve', 'heft_reserve', 'heft_reserve', 'heft_delay', 'heft_sbac', 'heft']
 labels = ['reservation-based(2)', 'reservation-based(1)', 'reservation-based(0)', 'delaying', 'sbac', 'original']
 slots = [5, 6, 7, 8, 9]
 data = [[0 for _ in slots] for _ in range(len(methods))]

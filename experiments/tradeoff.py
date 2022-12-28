@@ -17,8 +17,8 @@ parser.add_argument('--approach', '-a', default='heft')
 parser.add_argument('--input', '-i', default='samples/size/sample.15.json')
 args = parser.parse_args()
 
-method_list = [(f'{args.approach}_delay', 'delaying', '#00994c', '--o'), ('sbac',
-                                                       'sbac', '#004C99', '--^'), (f'{args.approach}_lookup', 'reservation-based', '#edb16d', '--x')]
+method_list = [(f'{args.approach}_delay', 'delaying', '#00994c', '--o'), (f'{args.approach}_sbac',
+                                                       'sbac', '#004C99', '--^'), (f'{args.approach}_reserve', 'reservation-based', '#edb16d', '--x')]
 
 skip = False
 if os.path.exists(f'./experiments/results/{args.approach}_tradeoff.json'):
@@ -55,7 +55,7 @@ def run_experiment():
                     break
 
                 feasible = False
-                for depth in [0] if method != f'{args.approach}_lookup' else [0, 1, 2]:
+                for depth in [0] if method != f'{args.approach}_reserve' else [0, 1, 2]:
                     try:
                         _, makepsan, memory = dag.schedule(
                             method, mem_size, {"depth": depth, "plot": False})

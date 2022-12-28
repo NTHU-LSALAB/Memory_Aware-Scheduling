@@ -19,7 +19,7 @@ max_out_list = [1, 2, 3, 4]
 alpha_list = [0.5, 1.0, 1.5]
 beta_list = [0.0, 0.5, 1.0, 2.0]
 iterations = 100
-methods = [('', 'baseline', 'black'), ('delay', 'delaying', '#00994c'), ('sbac', 'sbac', '#004C99'), ('lookup', 'reservation-based', '#edb16d')]
+methods = [('', 'baseline', 'black'), ('delay', 'delaying', '#00994c'), ('sbac', 'sbac', '#004C99'), ('reserve', 'reservation-based', '#edb16d')]
 
 
 def worker(app, method, usage):
@@ -29,7 +29,7 @@ def worker(app, method, usage):
             break
 
         feasible = False
-        for depth in [0] if 'lookup' not in method else [0, 1, 2]:
+        for depth in [0] if 'reserve' not in method else [0, 1, 2]:
             try:
                 _, makepsan, memory = app.schedule(
                     method, mem_size, {"depth": depth, "plot": False})

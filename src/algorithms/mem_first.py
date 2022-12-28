@@ -104,14 +104,6 @@ class MemFirst(AlgoBase):
         # notify subscribers
         for sub in subscribers:
             self.schedule_task(sub)
-
-    def print_priority(self, entry_node: Task):
-        print('''UPPER RANKS
----------------------------
-Task    Rank
----------------------------''')
-        self.bfs(entry_node, op=lambda task: print(
-            f'{task.id}       {round(task.priority, 4)}'))
     
     def overlap_exploration(self):
         self.memory.overlap_exploration()

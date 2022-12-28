@@ -42,7 +42,7 @@ for id, exp in enumerate(exp_list):
         for depth in depths:
             try:
                 _, makespan, memory = dag.schedule(
-                    f'{args.approach}_lookup', limit, {"depth": depth, "plot": False})
+                    f'{args.approach}_reserve', limit, {"depth": depth, "plot": False})
                 if makespan > 1000:
                     continue
                 if memory < min_memory:
@@ -65,7 +65,7 @@ for id, exp in enumerate(exp_list):
             pass
 
     print(f'Original Memory: {usage}, Original Makespan: {origin_makespan}')
-    print(f'{args.approach} lookup:', min_memory,  min_memory_makespan)
+    print(f'{args.approach} reserve:', min_memory,  min_memory_makespan)
     print(f'{args.approach} delay:', min_memory2,  min_memory_makespan2)
     data[0][id] = min_memory
     data[1][id] = min_memory2

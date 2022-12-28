@@ -13,9 +13,9 @@ import numpy as np
 
 task_num_list = [50, 100, 200]
 recipes = ['Mont']
-method_list = [('heft_delay', 'delaying', '#00994c', ''), ('sbac',
+method_list = [('heft_delay', 'delaying', '#00994c', ''), ('heft_sbac',
 
-                                                  'sbac', '#004C99', ''), ('heft_lookup', 'reservation-based', '#edb16d', '--x')]
+                                                  'sbac', '#004C99', ''), ('heft_reserve', 'reservation-based', '#edb16d', '--x')]
 skip = False
 if os.path.exists('./experiments/results/real_result.json'):
     skip = True
@@ -27,7 +27,7 @@ def worker(app, method, usage):
             break
 
         feasible = False
-        for depth in [0] if method != 'heft_lookup' else [0, 1, 2]:
+        for depth in [0] if method != 'heft_reserve' else [0, 1, 2]:
             try:
                 _, makepsan, memory = app.schedule(
                     method, mem_size, {"depth": depth, "plot": False})

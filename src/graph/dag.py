@@ -3,20 +3,13 @@ import json
 import sys
 from typing import Union
 from algorithms.algo_base import AlgoBase
-from algorithms.cpop import CPOP
-from algorithms.cpop_delay import CPOPDelay
-from algorithms.cpop_lookup import CPOPLookup
-from algorithms.cpop_sbac import CPOPSBAC
-from algorithms.heft_delay import HEFTDelay
-from algorithms.heft_lookup import HEFTLookup
-from algorithms.ippts import IPPTS
-from algorithms.ippts_lookup import IPPTSLookup
-from algorithms.mem_first import MemFirst
-from algorithms.sbac import SBAC
+from algorithms.cpop import CPOP, CPOPDelay, CPOPReserve, CPOPSBAC
+from algorithms.heft import HEFT, HEFTDelay, HEFTReserve, HEFTSBAC
+from algorithms.ippts import IPPTS, IPPTSDelay, IPPTSReserve, IPPTSSBAC
+# from algorithms.mem_first import MemFirst
 from platforms.dep import Dep
 from platforms.task import MTask
 from platforms.task import Task
-from algorithms.heft import HEFT
 from platforms.memory import Memory
 import copy
 sys.setrecursionlimit(10000)
@@ -27,21 +20,24 @@ class DAG:
     def __init__(self, dag = None):
         if dag is not None:
             self.read_input(dag)
-    def get_algo(self, algo):
+    def get_algo(self, algo, decorator=None):
+        if decorator is not None and decorator not in ('delay', 'reserve', 'sbac'):
+            raise ValueError('Not supported decorator')
+        # if decorator:
+        #     algo = f'{algo}_{decorator}'
         if isinstance(algo, str):
             algo: AlgoBase = {
                 'heft': HEFT(),
                 'heft_delay': HEFTDelay(),
-                'heft_lookup': HEFTLookup(),
+                'heft_reserve': HEFTReserve(),
+                'heft_sbac': HEFTSBAC(),
                 'cpop': CPOP(),
                 'cpop_delay': CPOPDelay(),
-                'cpop_lookup': CPOPLookup(),
-                'ippts': IPPTS(),
-                'ippts_lookup': IPPTSLookup(),
-                'mem_first': MemFirst(),
-                'heft_sbac': SBAC(),
+                'cpop_reserve': CPOPReserve(),
                 'cpop_sbac': CPOPSBAC(),
-                'sbac': SBAC()
+                'ippts': IPPTS(),
+                'ippts_reserve': IPPTSReserve(),
+                # 'mem_first': MemFirst(),
             }[algo.lower()]
         return algo
 

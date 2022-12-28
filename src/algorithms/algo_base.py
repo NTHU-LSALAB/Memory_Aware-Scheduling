@@ -71,6 +71,14 @@ class AlgoBase:
                     visited.append(edge.target)
                     queue.append(edge.target)
 
+    def print_priority(self, entry_task):
+        print('''UPPER RANKS
+---------------------------
+Task    Rank
+---------------------------''')
+        self.bfs(entry_task, op=lambda task: print(
+            f'{task.id}       {round(task.priority, 4)}'))
+
 
 class Slot:
     task: Node

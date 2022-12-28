@@ -15,7 +15,7 @@ from platforms.app import App
 app = App()
 app.read_input('input_dag.json')
 
-schedule, makespan, usage = app.schedule('heft_lookup', {'depth': 1})
+schedule, makespan, usage = app.schedule('heft_reserve', {'depth': 1})
 print(makespan, usage)
 ```
 
